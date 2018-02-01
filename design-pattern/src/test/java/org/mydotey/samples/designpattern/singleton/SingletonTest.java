@@ -59,6 +59,20 @@ public class SingletonTest {
         }
     };
 
+    private Getter _lazy2 = new Getter() {
+        @Override
+        public Object get() {
+            return LazySingleton2.getInstance();
+        }
+    };
+
+    private Getter _lazy3 = new Getter() {
+        @Override
+        public Object get() {
+            return LazySingleton3.getInstance();
+        }
+    };
+
     @Rule
     public final ExpectedException expectedExceptionRule = ExpectedException.none();
 
@@ -81,6 +95,16 @@ public class SingletonTest {
     @Test
     public void testLazy() {
         test(_lazy);
+    }
+
+    @Test
+    public void testLazy2() {
+        test(_lazy2);
+    }
+
+    @Test
+    public void testLazy3() {
+        test(_lazy3);
     }
 
     private void test(Getter getter) {
