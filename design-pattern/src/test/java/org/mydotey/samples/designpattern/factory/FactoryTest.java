@@ -11,6 +11,13 @@ import org.junit.Test;
 public class FactoryTest {
 
     @Test
+    public void basicFactoryTest() {
+        BasicFactory factory = new BasicFactory();
+        Product product = factory.newProduct();
+        Assert.assertNotNull(product);
+    }
+
+    @Test
     public void factoryTest() {
         Factory factory = new Factory();
         Product product = factory.newProduct(ProductImpl.class.getName());
@@ -78,6 +85,22 @@ public class FactoryTest {
         Assert.assertTrue(product.getClass() == ProductImpl.class);
         Product product2 = DynamicFactory3.newProduct(ProductImpl2.class);
         Assert.assertTrue(product2.getClass() == ProductImpl2.class);
+    }
+
+    @Test
+    public void dynamicFactory3TestWithSelfRegistration() {
+        String className = "org.mydotey.samples.designpattern.factory.SelfRegistrationProduct";
+
+        // on init
+        try {
+            Class.forName(className);
+        } catch (Exception e) {
+            Assert.fail("should not have exception here");
+        }
+
+        // after init
+        Product product = DynamicFactory.newProduct(className);
+        Assert.assertEquals(className, product.getClass().getName());
     }
 
 }
