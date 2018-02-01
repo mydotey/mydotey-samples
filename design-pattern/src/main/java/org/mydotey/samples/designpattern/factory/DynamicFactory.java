@@ -9,17 +9,17 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public class DynamicFactory {
 
-    private static ConcurrentHashMap<Object, Object> _objectCache = new ConcurrentHashMap<>();
+    private static ConcurrentHashMap<String, Product> _objectCache = new ConcurrentHashMap<>();
 
     private DynamicFactory() {
 
     }
 
-    public static void register(Object identity, Object instance) {
+    public static void register(String identity, Product instance) {
         _objectCache.put(identity, instance);
     }
 
-    public static Object newProduct(Object identity) {
+    public static Product newProduct(String identity) {
         return _objectCache.get(identity);
     }
 

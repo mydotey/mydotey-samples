@@ -12,19 +12,18 @@ import org.mydotey.samples.designpattern.Checkers;
  */
 public class DynamicFactory3 {
 
-    private static ConcurrentHashMap<Class<?>, Supplier<?>> _clazzCache = new ConcurrentHashMap<>();
+    private static ConcurrentHashMap<Class<?>, Supplier<Product>> _clazzCache = new ConcurrentHashMap<>();
 
     private DynamicFactory3() {
 
     }
 
-    public static void register(Class<?> clazz, Supplier<?> supplier) {
+    public static void register(Class<?> clazz, Supplier<Product> supplier) {
         _clazzCache.put(clazz, supplier);
     }
 
-    @SuppressWarnings("unchecked")
-    public static <T> T newProduct(Class<T> clazz) {
-        Supplier<T> supplier = (Supplier<T>) _clazzCache.get(clazz);
+    public static Product newProduct(Class<?> clazz) {
+        Supplier<Product> supplier = _clazzCache.get(clazz);
         Checkers.requireNonNull(supplier, "clazz %s has no supplier.", clazz);
         return supplier.get();
     }

@@ -15,7 +15,7 @@ import org.mydotey.samples.designpattern.EmptyValues;
  */
 public class DynamicFactory2 {
 
-    private static ConcurrentHashMap<Object, Class<?>> _clazzCache = new ConcurrentHashMap<>();
+    private static ConcurrentHashMap<String, Class<?>> _clazzCache = new ConcurrentHashMap<>();
 
     private static ConcurrentHashMap<Class<?>, Constructor<?>> _constructorCache = new ConcurrentHashMap<>();
 
@@ -31,16 +31,16 @@ public class DynamicFactory2 {
 
     }
 
-    public static void register(Object identity, Class<?> clazz) {
+    public static void register(String identity, Class<?> clazz) {
         _clazzCache.put(identity, clazz);
     }
 
-    public static Object newProduct(Object identity) {
+    public static Product newProduct(String identity) {
         Class<?> clazz = _clazzCache.get(identity);
         Checkers.requireNonNull(clazz, "%s is not registered.", identity);
         Constructor<?> constructor = _constructorCache.computeIfAbsent(clazz, _constructorGenerator);
         try {
-            return constructor.newInstance(EmptyValues.EMPTY_OBJECT_ARRAY);
+            return (Product) constructor.newInstance(EmptyValues.EMPTY_OBJECT_ARRAY);
         } catch (InstantiationException | IllegalAccessException | IllegalArgumentException
                 | InvocationTargetException e) {
             throw new UnsupportedOperationException("default constructor of " + clazz + " cannot be invoked.", e);
