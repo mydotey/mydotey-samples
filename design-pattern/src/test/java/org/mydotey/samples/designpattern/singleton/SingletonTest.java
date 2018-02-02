@@ -52,6 +52,13 @@ public class SingletonTest {
         }
     };
 
+    private Getter _early2 = new Getter() {
+        @Override
+        public Object get() {
+            return EarlySingleton2.INSTANCE;
+        }
+    };
+
     private Getter _lazy = new Getter() {
         @Override
         public Object get() {
@@ -90,6 +97,11 @@ public class SingletonTest {
     @Test
     public void testEarly() {
         test(_early);
+    }
+
+    @Test
+    public void testEarly2() {
+        test(_early2);
     }
 
     @Test
