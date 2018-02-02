@@ -5,6 +5,6 @@ package org.mydotey.samples.designpattern.factory;
  *
  *         Feb 1, 2018
  */
-public class ProductImpl implements Product {
+public class ConcreteProduct2 implements Product {
 
 }

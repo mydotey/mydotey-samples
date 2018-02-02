@@ -8,11 +8,11 @@ package org.mydotey.samples.designpattern.factory;
 public class Factory {
 
     public Product newProduct(String identity) {
-        if (ProductImpl.class.getName().equals(identity))
-            return new ProductImpl();
+        if (ConcreteProduct.class.getName().equals(identity))
+            return new ConcreteProduct();
 
-        if (ProductImpl2.class.getName().equals(identity))
-            return new ProductImpl2();
+        if (ConcreteProduct2.class.getName().equals(identity))
+            return new ConcreteProduct2();
 
         throw new IllegalArgumentException(identity + " is not supported.");
     }

@@ -8,7 +8,7 @@ package org.mydotey.samples.designpattern.factory;
 public class BasicFactory {
 
     public Product newProduct() {
-        return new ProductImpl();
+        return new ConcreteProduct();
     }
 
 }
