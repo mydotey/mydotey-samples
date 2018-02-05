@@ -82,6 +82,7 @@ public class AutoRefreshedObjectPool extends ObjectPool implements Closeable {
 
     private ObjectPoolEntry getEntry(Integer index) {
         synchronized (index) {
+            tryRefresh((AutoRefreshedObjectPoolEntry) _entries[index]);
             _freeIndexes.remove(index);
             _usedIndexes.add(index);
             return _entries[index];
@@ -115,19 +116,19 @@ public class AutoRefreshedObjectPool extends ObjectPool implements Closeable {
 
     protected void refresh() {
         for (int i = 0; i < _size; i++) {
-            refresh((AutoRefreshedObjectPoolEntry) _entries[i]);
+            tryRefresh((AutoRefreshedObjectPoolEntry) _entries[i]);
         }
     }
 
-    protected void refresh(AutoRefreshedObjectPoolEntry entry) {
+    protected boolean tryRefresh(AutoRefreshedObjectPoolEntry entry) {
         boolean needRefresh = isExpired(entry) || isStale(entry);
         if (!needRefresh)
-            return;
+            return false;
 
         synchronized (entry.getIndex()) {
+            _freeIndexes.remove(entry.getIndex());
             boolean closable = !_usedIndexes.remove(entry.getIndex());
             if (closable) {
-                _freeIndexes.remove(entry.getIndex());
                 close(entry);
             } else {
                 entry.setClosable();
@@ -136,6 +137,8 @@ public class AutoRefreshedObjectPool extends ObjectPool implements Closeable {
             _entries[entry.getIndex()] = newPoolEntry(entry.getIndex());
             _freeIndexes.add(entry.getIndex());
         }
+
+        return true;
     }
 
     protected void close(ObjectPoolEntry entry) {
