@@ -16,9 +16,9 @@ public class ObjectPoolConfig implements Cloneable {
     private int minSize;
     private int maxSize;
     private int scaleFactor;
-    private Supplier<?> reusableFactory;
+    private Supplier<?> objectFactory;
 
-    private ObjectPoolConfig() {
+    protected ObjectPoolConfig() {
 
     }
 
@@ -34,8 +34,8 @@ public class ObjectPoolConfig implements Cloneable {
         return scaleFactor;
     }
 
-    public Supplier<?> getReusableFactory() {
-        return reusableFactory;
+    public Supplier<?> getObjectFactory() {
+        return objectFactory;
     }
 
     @Override
@@ -49,11 +49,19 @@ public class ObjectPoolConfig implements Cloneable {
 
     public static class Builder {
 
-        private ObjectPoolConfig _config;
+        protected ObjectPoolConfig _config;
 
-        private Builder() {
-            _config = new ObjectPoolConfig();
+        protected Builder() {
+            _config = newPoolConfig();
             _config.scaleFactor = 1;
+        }
+
+        protected ObjectPoolConfig newPoolConfig() {
+            return new ObjectPoolConfig();
+        }
+
+        protected ObjectPoolConfig getPoolConfig() {
+            return _config;
         }
 
         public Builder setMinSize(int minSize) {
@@ -71,8 +79,8 @@ public class ObjectPoolConfig implements Cloneable {
             return this;
         }
 
-        public Builder setReusableFactory(Supplier<?> reusableFactory) {
-            _config.reusableFactory = reusableFactory;
+        public Builder setObjectFactory(Supplier<?> objectFactory) {
+            _config.objectFactory = objectFactory;
             return this;
         }
 
@@ -93,8 +101,8 @@ public class ObjectPoolConfig implements Cloneable {
             if (_config.scaleFactor > _config.maxSize - _config.minSize)
                 throw new IllegalStateException("too large scaleFactor: " + _config.scaleFactor);
 
-            if (_config.reusableFactory == null)
-                throw new IllegalStateException("reusableFactory is not set");
+            if (_config.objectFactory == null)
+                throw new IllegalStateException("objectFactory is not set");
 
             return _config.clone();
         }

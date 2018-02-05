@@ -10,31 +10,31 @@ public class ObjectPoolEntry implements Cloneable {
     private Integer _index;
     private volatile boolean _released;
 
-    private Object _reusable;
+    private Object _obj;
 
-    ObjectPoolEntry(Integer index, Object reusable) {
+    protected ObjectPoolEntry(Integer index, Object obj) {
         _index = index;
-        _reusable = reusable;
+        _obj = obj;
     }
 
-    Integer getIndex() {
+    protected Integer getIndex() {
         return _index;
     }
 
-    boolean isReleased() {
+    protected boolean isReleased() {
         return _released;
     }
 
-    void setReleased() {
+    protected void setReleased() {
         _released = true;
     }
 
-    public Object getReusable() {
-        return _reusable;
+    public Object getObject() {
+        return _obj;
     }
 
     @Override
-    protected ObjectPoolEntry clone() {
+    public ObjectPoolEntry clone() {
         try {
             return (ObjectPoolEntry) super.clone();
         } catch (CloneNotSupportedException e) {

@@ -14,15 +14,15 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public class ObjectPool {
 
-    private int _size;
-    private ObjectPoolEntry[] _reusables;
+    protected int _size;
+    protected ObjectPoolEntry[] _entries;
 
-    private Set<Integer> _usedIndexes;
-    private BlockingQueue<Integer> _freeIndexes;
+    protected Set<Integer> _usedIndexes;
+    protected BlockingQueue<Integer> _freeIndexes;
 
-    private ObjectPoolConfig _config;
+    protected ObjectPoolConfig _config;
 
-    private Object _acquireLock;
+    protected Object _acquireLock;
 
     public ObjectPool(ObjectPoolConfig config) {
         Objects.requireNonNull(config, "config is null");
@@ -32,7 +32,7 @@ public class ObjectPool {
     }
 
     protected void init() {
-        _reusables = new ObjectPoolEntry[_config.getMaxSize()];
+        _entries = new ObjectPoolEntry[_config.getMaxSize()];
 
         _usedIndexes = Collections.newSetFromMap(new ConcurrentHashMap<Integer, Boolean>(_config.getMaxSize()));
         _freeIndexes = new ArrayBlockingQueue<>(_config.getMaxSize());
@@ -42,16 +42,28 @@ public class ObjectPool {
         scaleOut(_config.getMinSize());
     }
 
-    private void scaleOut(int count) {
+    protected void scaleOut(int count) {
         for (int i = 0; i < count && _size < _config.getMaxSize(); i++) {
-            Object reusable = _config.getReusableFactory().get();
-            if (reusable == null)
-                throw new IllegalStateException("Got null from the reusable suppiler.");
+            Object obj = _config.getObjectFactory().get();
+            if (obj == null)
+                throw new IllegalStateException("Got null from the object suppiler.");
 
-            _reusables[_size] = new ObjectPoolEntry(_size, reusable);
-            _freeIndexes.add(_size);
+            _entries[_size] = newPoolEntry(new Integer(_size));
+            _freeIndexes.add(_entries[_size].getIndex());
             _size++;
         }
+    }
+
+    protected Object newObject() {
+        Object obj = _config.getObjectFactory().get();
+        if (obj == null)
+            throw new IllegalStateException("Got null from the object suppiler.");
+
+        return obj;
+    }
+
+    protected ObjectPoolEntry newPoolEntry(Integer index) {
+        return new ObjectPoolEntry(index, newObject());
     }
 
     public ObjectPoolConfig getConfig() {
@@ -81,7 +93,7 @@ public class ObjectPool {
 
         Integer index = _freeIndexes.take();
         _usedIndexes.add(index);
-        return _reusables[index];
+        return _entries[index];
     }
 
     public ObjectPoolEntry tryAcquire() {
@@ -90,23 +102,23 @@ public class ObjectPool {
             return null;
 
         _usedIndexes.add(index);
-        return _reusables[index];
+        return _entries[index];
     }
 
-    public void release(ObjectPoolEntry reusableEntry) {
-        if (reusableEntry == null || reusableEntry.isReleased())
+    public void release(ObjectPoolEntry entry) {
+        if (entry == null || entry.isReleased())
             return;
 
-        synchronized (reusableEntry) {
-            if (reusableEntry.isReleased())
+        synchronized (entry) {
+            if (entry.isReleased())
                 return;
 
-            _reusables[reusableEntry.getIndex()] = reusableEntry.clone();
-            reusableEntry.setReleased();
+            entry.setReleased();
         }
 
-        _usedIndexes.remove(reusableEntry.getIndex());
-        _freeIndexes.add(reusableEntry.getIndex());
+        _entries[entry.getIndex()] = entry.clone();
+        _usedIndexes.remove(entry.getIndex());
+        _freeIndexes.add(entry.getIndex());
     }
 
 }
