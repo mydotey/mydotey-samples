@@ -5,6 +5,6 @@ package org.mydotey.samples.designpattern.objectpool;
  *
  * Feb 2, 2018
  */
-public class Reusable {
+public interface Reusable<T extends Reusable<T>> {
 
 }

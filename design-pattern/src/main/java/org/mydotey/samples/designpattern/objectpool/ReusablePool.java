@@ -12,19 +12,20 @@ import java.util.concurrent.ConcurrentHashMap;
  *
  * Feb 2, 2018
  */
-public class ReusablePool {
+@SuppressWarnings("unchecked")
+public class ReusablePool<T extends Reusable<T>> {
 
     private int _size;
-    private ReusableEntry[] _reusables;
+    private ReusablePoolEntry<T>[] _reusables;
 
     private Set<Integer> _usedIndexes;
     private BlockingQueue<Integer> _freeIndexes;
 
-    private ReusablePoolConfig _config;
+    private ReusablePoolConfig<T> _config;
 
     private Object _acquireLock;
 
-    public ReusablePool(ReusablePoolConfig config) {
+    public ReusablePool(ReusablePoolConfig<T> config) {
         Objects.requireNonNull(config, "config is null");
         _config = config;
 
@@ -32,7 +33,7 @@ public class ReusablePool {
     }
 
     private void init() {
-        _reusables = new ReusableEntry[_config.getMaxSize()];
+        _reusables = new ReusablePoolEntry[_config.getMaxSize()];
 
         _usedIndexes = Collections.newSetFromMap(new ConcurrentHashMap<Integer, Boolean>(_config.getMaxSize()));
         _freeIndexes = new ArrayBlockingQueue<>(_config.getMaxSize());
@@ -40,9 +41,9 @@ public class ReusablePool {
         _acquireLock = new Object();
     }
 
-    public ReusableEntry acquire() throws InterruptedException {
+    public ReusablePoolEntry<T> acquire() throws InterruptedException {
         if (_size < _config.getMaxSize()) {
-            ReusableEntry entry = tryAcquire();
+            ReusablePoolEntry<T> entry = tryAcquire();
             if (entry != null)
                 return entry;
 
@@ -51,7 +52,11 @@ public class ReusablePool {
                     entry = tryAcquire();
                     if (entry == null) {
                         for (int i = 0; i < _config.getScaleFactor() && _size < _config.getMaxSize(); i++) {
-                            _reusables[_size] = new ReusableEntry(_size, _config.getReusableFactory().get());
+                            Reusable<T> reusable = _config.getReusableFactory().get();
+                            if (reusable == null)
+                                throw new IllegalStateException("Got null from the reusable suppiler.");
+
+                            _reusables[_size] = new ReusablePoolEntry<T>(_size, reusable);
                             _freeIndexes.add(_size);
                             _size++;
                         }
@@ -65,7 +70,7 @@ public class ReusablePool {
         return _reusables[index];
     }
 
-    public ReusableEntry tryAcquire() {
+    public ReusablePoolEntry<T> tryAcquire() {
         Integer index = _freeIndexes.poll();
         if (index == null)
             return null;
@@ -74,7 +79,7 @@ public class ReusablePool {
         return _reusables[index];
     }
 
-    public void release(ReusableEntry reusableEntry) {
+    public void release(ReusablePoolEntry<T> reusableEntry) {
         if (reusableEntry == null || reusableEntry.isReleased())
             return;
 

@@ -7,16 +7,17 @@ import java.util.function.Supplier;
  *
  * Feb 2, 2018
  */
-public class ReusablePoolConfig implements Cloneable {
+@SuppressWarnings("unchecked")
+public class ReusablePoolConfig<T extends Reusable<T>> implements Cloneable {
 
-    public static Builder newBuilder() {
-        return new Builder();
+    public static <T extends Reusable<T>> Builder<T> newBuilder() {
+        return new Builder<T>();
     }
 
     private int minSize;
     private int maxSize;
     private int scaleFactor;
-    private Supplier<Reusable> reusableFactory;
+    private Supplier<Reusable<T>> reusableFactory;
 
     private ReusablePoolConfig() {
 
@@ -34,49 +35,49 @@ public class ReusablePoolConfig implements Cloneable {
         return scaleFactor;
     }
 
-    public Supplier<Reusable> getReusableFactory() {
+    public Supplier<Reusable<T>> getReusableFactory() {
         return reusableFactory;
     }
 
     @Override
-    protected ReusablePoolConfig clone() {
+    protected ReusablePoolConfig<T> clone() {
         try {
-            return (ReusablePoolConfig) super.clone();
+            return (ReusablePoolConfig<T>) super.clone();
         } catch (CloneNotSupportedException e) {
             throw new UnsupportedOperationException(e);
         }
     }
 
-    public static class Builder {
+    public static class Builder<T extends Reusable<T>> {
 
-        private ReusablePoolConfig _config;
+        private ReusablePoolConfig<T> _config;
 
         private Builder() {
-            _config = new ReusablePoolConfig();
+            _config = new ReusablePoolConfig<T>();
             _config.scaleFactor = 1;
         }
 
-        public Builder setMinSize(int minSize) {
+        public Builder<T> setMinSize(int minSize) {
             _config.minSize = minSize;
             return this;
         }
 
-        public Builder setMaxSize(int maxSize) {
+        public Builder<T> setMaxSize(int maxSize) {
             _config.maxSize = maxSize;
             return this;
         }
 
-        public Builder setScaleFactor(int scaleFactor) {
+        public Builder<T> setScaleFactor(int scaleFactor) {
             _config.scaleFactor = scaleFactor;
             return this;
         }
 
-        public Builder setReusableFactory(Supplier<Reusable> reusableFactory) {
+        public Builder<T> setReusableFactory(Supplier<Reusable<T>> reusableFactory) {
             _config.reusableFactory = reusableFactory;
             return this;
         }
 
-        public ReusablePoolConfig build() {
+        public ReusablePoolConfig<T> build() {
             if (_config.minSize < 0)
                 throw new IllegalStateException("minSize is invalid: " + _config.minSize);
 
