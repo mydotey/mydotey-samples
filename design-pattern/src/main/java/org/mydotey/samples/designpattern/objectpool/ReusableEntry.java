@@ -17,19 +17,19 @@ public class ReusableEntry implements Cloneable {
         _reusable = reusable;
     }
 
-    Integer index() {
+    Integer getIndex() {
         return _index;
     }
 
-    boolean released() {
+    boolean isReleased() {
         return _released;
     }
-    
-    void markReleased() {
+
+    void setReleased() {
         _released = true;
     }
 
-    public Reusable reusable() {
+    public Reusable getReusable() {
         return _reusable;
     }
 
@@ -37,8 +37,8 @@ public class ReusableEntry implements Cloneable {
     protected ReusableEntry clone() {
         try {
             return (ReusableEntry) super.clone();
-        } catch (Exception e) {
-            return new ReusableEntry(_index, _reusable);
+        } catch (CloneNotSupportedException e) {
+            throw new UnsupportedOperationException(e);
         }
     }
 

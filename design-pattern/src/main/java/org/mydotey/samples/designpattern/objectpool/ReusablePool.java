@@ -1,8 +1,11 @@
 package org.mydotey.samples.designpattern.objectpool;
 
+import java.util.Collections;
 import java.util.Objects;
+import java.util.Set;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * @author koqizhao
@@ -14,7 +17,7 @@ public class ReusablePool {
     private int _size;
     private ReusableEntry[] _reusables;
 
-    private BlockingQueue<Integer> _usedIndexes;
+    private Set<Integer> _usedIndexes;
     private BlockingQueue<Integer> _freeIndexes;
 
     private ReusablePoolConfig _config;
@@ -31,14 +34,10 @@ public class ReusablePool {
     private void init() {
         _reusables = new ReusableEntry[_config.getMaxSize()];
 
-        _usedIndexes = new ArrayBlockingQueue<>(_config.getMaxSize());
+        _usedIndexes = Collections.newSetFromMap(new ConcurrentHashMap<Integer, Boolean>(_config.getMaxSize()));
         _freeIndexes = new ArrayBlockingQueue<>(_config.getMaxSize());
 
         _acquireLock = new Object();
-    }
-
-    private Reusable newObject() {
-        return new Reusable();
     }
 
     public ReusableEntry acquire() throws InterruptedException {
@@ -51,13 +50,12 @@ public class ReusablePool {
                 if (_size < _config.getMaxSize()) {
                     entry = tryAcquire();
                     if (entry == null) {
-                        entry = new ReusableEntry(_size, newObject());
-                        _reusables[_size] = entry;
-                        _usedIndexes.add(_size);
-                        _size++;
+                        for (int i = 0; i < _config.getScaleFactor() && _size < _config.getMaxSize(); i++) {
+                            _reusables[_size] = new ReusableEntry(_size, _config.getReusableFactory().get());
+                            _freeIndexes.add(_size);
+                            _size++;
+                        }
                     }
-
-                    return entry;
                 }
             }
         }
@@ -77,19 +75,19 @@ public class ReusablePool {
     }
 
     public void release(ReusableEntry reusableEntry) {
-        if (reusableEntry == null || reusableEntry.released())
+        if (reusableEntry == null || reusableEntry.isReleased())
             return;
 
         synchronized (reusableEntry) {
-            if (reusableEntry.released())
+            if (reusableEntry.isReleased())
                 return;
 
-            _reusables[reusableEntry.index()] = reusableEntry.clone();
-            reusableEntry.markReleased();
+            _reusables[reusableEntry.getIndex()] = reusableEntry.clone();
+            reusableEntry.setReleased();
         }
 
-        _usedIndexes.remove(reusableEntry.index());
-        _freeIndexes.add(reusableEntry.index());
+        _usedIndexes.remove(reusableEntry.getIndex());
+        _freeIndexes.add(reusableEntry.getIndex());
     }
 
 }
