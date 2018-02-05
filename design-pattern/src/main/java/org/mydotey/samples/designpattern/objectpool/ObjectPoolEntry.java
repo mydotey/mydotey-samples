@@ -5,15 +5,14 @@ package org.mydotey.samples.designpattern.objectpool;
  *
  * Feb 2, 2018
  */
-@SuppressWarnings("unchecked")
-public class ReusablePoolEntry<T extends Reusable<T>> implements Cloneable {
+public class ObjectPoolEntry implements Cloneable {
 
     private Integer _index;
     private volatile boolean _released;
 
-    private Reusable<T> _reusable;
+    private Object _reusable;
 
-    ReusablePoolEntry(Integer index, Reusable<T> reusable) {
+    ObjectPoolEntry(Integer index, Object reusable) {
         _index = index;
         _reusable = reusable;
     }
@@ -30,14 +29,14 @@ public class ReusablePoolEntry<T extends Reusable<T>> implements Cloneable {
         _released = true;
     }
 
-    public T getReusable() {
-        return (T) _reusable;
+    public Object getReusable() {
+        return _reusable;
     }
 
     @Override
-    protected ReusablePoolEntry<T> clone() {
+    protected ObjectPoolEntry clone() {
         try {
-            return (ReusablePoolEntry<T>) super.clone();
+            return (ObjectPoolEntry) super.clone();
         } catch (CloneNotSupportedException e) {
             throw new UnsupportedOperationException(e);
         }
