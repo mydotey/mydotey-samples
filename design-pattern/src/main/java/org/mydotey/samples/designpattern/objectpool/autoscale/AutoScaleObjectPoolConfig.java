@@ -1,7 +1,9 @@
 package org.mydotey.samples.designpattern.objectpool.autoscale;
 
+import java.util.function.Consumer;
 import java.util.function.Supplier;
 
+import org.mydotey.samples.designpattern.objectpool.ObjectPool;
 import org.mydotey.samples.designpattern.objectpool.ObjectPoolConfig;
 
 /**
@@ -17,7 +19,7 @@ public interface AutoScaleObjectPoolConfig<T> extends ObjectPoolConfig<T> {
 
     StaleChecker<T> getStaleChecker();
 
-    long getStaleCheckInterval();
+    long getCheckInterval();
 
     int getScaleFactor();
 
@@ -33,6 +35,9 @@ public interface AutoScaleObjectPoolConfig<T> extends ObjectPoolConfig<T> {
         Builder<T> setObjectFactory(Supplier<T> objectFactory);
 
         @Override
+        Builder<T> setOnEntryCreate(Consumer<ObjectPool.Entry<T>> onEntryCreate);
+
+        @Override
         AutoScaleObjectPoolConfig<T> build();
 
         Builder<T> setObjectTtl(long objectTtl);
@@ -41,7 +46,7 @@ public interface AutoScaleObjectPoolConfig<T> extends ObjectPoolConfig<T> {
 
         Builder<T> setStaleChecker(StaleChecker<T> staleChecker);
 
-        Builder<T> setStaleCheckInterval(long staleCheckInterval);
+        Builder<T> setCheckInterval(long checkInterval);
 
         Builder<T> setScaleFactor(int scaleFactor);
 

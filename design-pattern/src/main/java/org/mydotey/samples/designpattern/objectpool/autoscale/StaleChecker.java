@@ -8,14 +8,7 @@ package org.mydotey.samples.designpattern.objectpool.autoscale;
 public interface StaleChecker<T> {
 
     @SuppressWarnings("rawtypes")
-    static StaleChecker DEFAULT = new StaleChecker<Object>() {
-
-        @Override
-        public boolean isStale(Object obj) {
-            return false;
-        }
-
-    };
+    static StaleChecker DEFAULT = obj -> false;
 
     boolean isStale(T obj);
 

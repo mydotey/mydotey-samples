@@ -1,6 +1,9 @@
 package org.mydotey.samples.designpattern.objectpool;
 
+import java.util.function.Consumer;
 import java.util.function.Supplier;
+
+import org.mydotey.samples.designpattern.objectpool.ObjectPool.Entry;
 
 /**
  * @author koqizhao
@@ -16,6 +19,7 @@ public class DefaultObjectPoolConfig<T> implements ObjectPoolConfig<T>, Cloneabl
     private int minSize;
     private int maxSize;
     private Supplier<T> objectFactory;
+    private Consumer<Entry<T>> onEntryCreate;
 
     protected DefaultObjectPoolConfig() {
 
@@ -36,6 +40,11 @@ public class DefaultObjectPoolConfig<T> implements ObjectPoolConfig<T>, Cloneabl
         return objectFactory;
     }
 
+    @Override
+    public Consumer<Entry<T>> getOnEntryCreate() {
+        return onEntryCreate;
+    }
+
     @SuppressWarnings("unchecked")
     @Override
     protected DefaultObjectPoolConfig<T> clone() {
@@ -48,10 +57,16 @@ public class DefaultObjectPoolConfig<T> implements ObjectPoolConfig<T>, Cloneabl
 
     public static class Builder<T> implements ObjectPoolConfig.Builder<T> {
 
+        @SuppressWarnings("rawtypes")
+        protected static final Consumer DEFAULT_ON_ENTRY_CREATE = e -> {
+        };
+
         protected DefaultObjectPoolConfig<T> _config;
 
+        @SuppressWarnings("unchecked")
         protected Builder() {
             _config = newPoolConfig();
+            _config.onEntryCreate = DEFAULT_ON_ENTRY_CREATE;
         }
 
         protected DefaultObjectPoolConfig<T> newPoolConfig() {
@@ -81,6 +96,12 @@ public class DefaultObjectPoolConfig<T> implements ObjectPoolConfig<T>, Cloneabl
         }
 
         @Override
+        public Builder<T> setOnEntryCreate(Consumer<Entry<T>> onEntryCreate) {
+            _config.onEntryCreate = onEntryCreate;
+            return this;
+        }
+
+        @Override
         public DefaultObjectPoolConfig<T> build() {
             if (_config.minSize < 0)
                 throw new IllegalStateException("minSize is invalid: " + _config.minSize);
@@ -94,6 +115,9 @@ public class DefaultObjectPoolConfig<T> implements ObjectPoolConfig<T>, Cloneabl
 
             if (_config.objectFactory == null)
                 throw new IllegalStateException("objectFactory is not set");
+
+            if (_config.onEntryCreate == null)
+                throw new IllegalStateException("onEntryCreate is null");
 
             return _config.clone();
         }

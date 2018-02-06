@@ -30,7 +30,7 @@ public class DefaultAutoScaleObjectPool<T> extends DefaultObjectPool<T> implemen
 
         _scheduledExecutorService = Executors.newSingleThreadScheduledExecutor(Executors.defaultThreadFactory());
         _scheduledExecutorService.scheduleWithFixedDelay(() -> DefaultAutoScaleObjectPool.this.autoCheck(),
-                getConfig().getStaleCheckInterval(), getConfig().getStaleCheckInterval(), TimeUnit.MILLISECONDS);
+                getConfig().getCheckInterval(), getConfig().getCheckInterval(), TimeUnit.MILLISECONDS);
     }
 
     @Override
@@ -49,6 +49,11 @@ public class DefaultAutoScaleObjectPool<T> extends DefaultObjectPool<T> implemen
 
     @Override
     protected AutoScaleEntry<T> newPoolEntry(Integer number) {
+        return (AutoScaleEntry<T>) super.newPoolEntry(number);
+    }
+
+    @Override
+    protected AutoScaleEntry<T> newConcretePoolEntry(Integer number) {
         return new AutoScaleEntry<T>(number, newObject());
     }
 

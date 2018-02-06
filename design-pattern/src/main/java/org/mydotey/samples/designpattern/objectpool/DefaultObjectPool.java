@@ -78,6 +78,12 @@ public class DefaultObjectPool<T> implements ObjectPool<T> {
     }
 
     protected DefaultEntry<T> newPoolEntry(Integer number) {
+        DefaultEntry<T> entry = newConcretePoolEntry(number);
+        _config.getOnEntryCreate().accept(entry);
+        return entry;
+    }
+
+    protected DefaultEntry<T> newConcretePoolEntry(Integer number) {
         return new DefaultEntry<T>(number, newObject());
     }
 

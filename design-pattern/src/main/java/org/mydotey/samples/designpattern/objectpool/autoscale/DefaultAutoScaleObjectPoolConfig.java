@@ -1,8 +1,10 @@
 package org.mydotey.samples.designpattern.objectpool.autoscale;
 
 import java.util.concurrent.TimeUnit;
+import java.util.function.Consumer;
 import java.util.function.Supplier;
 
+import org.mydotey.samples.designpattern.objectpool.ObjectPool;
 import org.mydotey.samples.designpattern.objectpool.DefaultObjectPoolConfig;
 
 /**
@@ -20,7 +22,7 @@ public class DefaultAutoScaleObjectPoolConfig<T> extends DefaultObjectPoolConfig
     private long objectTtl;
     private long maxIdleTime;
     private StaleChecker<T> staleChecker;
-    private long staleCheckInterval;
+    private long checkInterval;
     private int scaleFactor;
 
     protected DefaultAutoScaleObjectPoolConfig() {
@@ -43,8 +45,8 @@ public class DefaultAutoScaleObjectPoolConfig<T> extends DefaultObjectPoolConfig
     }
 
     @Override
-    public long getStaleCheckInterval() {
-        return staleCheckInterval;
+    public long getCheckInterval() {
+        return checkInterval;
     }
 
     @Override
@@ -60,7 +62,7 @@ public class DefaultAutoScaleObjectPoolConfig<T> extends DefaultObjectPoolConfig
             getPoolConfig().objectTtl = Long.MAX_VALUE;
             getPoolConfig().maxIdleTime = Long.MAX_VALUE;
             getPoolConfig().staleChecker = StaleChecker.DEFAULT;
-            getPoolConfig().staleCheckInterval = TimeUnit.SECONDS.toMillis(1);
+            getPoolConfig().checkInterval = TimeUnit.SECONDS.toMillis(1);
             getPoolConfig().scaleFactor = 1;
         }
 
@@ -90,6 +92,11 @@ public class DefaultAutoScaleObjectPoolConfig<T> extends DefaultObjectPoolConfig
         }
 
         @Override
+        public Builder<T> setOnEntryCreate(Consumer<ObjectPool.Entry<T>> onEntryCreate) {
+            return (Builder<T>) super.setOnEntryCreate(onEntryCreate);
+        }
+
+        @Override
         public Builder<T> setObjectTtl(long objectTtl) {
             getPoolConfig().objectTtl = objectTtl;
             return this;
@@ -108,8 +115,8 @@ public class DefaultAutoScaleObjectPoolConfig<T> extends DefaultObjectPoolConfig
         }
 
         @Override
-        public Builder<T> setStaleCheckInterval(long staleCheckInterval) {
-            getPoolConfig().staleCheckInterval = staleCheckInterval;
+        public Builder<T> setCheckInterval(long checkInterval) {
+            getPoolConfig().checkInterval = checkInterval;
             return this;
         }
 
@@ -130,8 +137,8 @@ public class DefaultAutoScaleObjectPoolConfig<T> extends DefaultObjectPoolConfig
             if (getPoolConfig().staleChecker == null)
                 throw new IllegalStateException("staleChecker is null.");
 
-            if (getPoolConfig().staleCheckInterval <= 0)
-                throw new IllegalStateException("staleCheckInterval is invalid: " + getPoolConfig().staleCheckInterval);
+            if (getPoolConfig().checkInterval <= 0)
+                throw new IllegalStateException("checkInterval is invalid: " + getPoolConfig().checkInterval);
 
             if (getPoolConfig().scaleFactor <= 0)
                 throw new IllegalStateException("invalid scaleFactor: " + getPoolConfig().scaleFactor);
