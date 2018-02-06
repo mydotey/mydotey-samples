@@ -7,26 +7,32 @@ package org.mydotey.samples.designpattern.objectpool;
  */
 public class ObjectPoolEntry implements Cloneable {
 
-    private Integer _index;
-    private volatile boolean _released;
+    protected interface Status {
+        String AVAILABLE = "available";
+        String ACQUIRED = "acquired";
+        String RELEASED = "released";
+    }
+
+    private Integer _number;
+    private volatile String _status;
 
     private Object _obj;
 
-    protected ObjectPoolEntry(Integer index, Object obj) {
-        _index = index;
+    protected ObjectPoolEntry(Integer number, Object obj) {
+        _number = number;
         _obj = obj;
     }
 
-    protected Integer getIndex() {
-        return _index;
+    protected Integer getNumber() {
+        return _number;
     }
 
-    protected boolean isReleased() {
-        return _released;
+    protected String getStatus() {
+        return _status;
     }
 
-    protected void setReleased() {
-        _released = true;
+    protected void setStatus(String status) {
+        _status = status;
     }
 
     public Object getObject() {

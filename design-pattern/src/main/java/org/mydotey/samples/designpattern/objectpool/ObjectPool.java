@@ -1,11 +1,12 @@
 package org.mydotey.samples.designpattern.objectpool;
 
-import java.util.Collections;
 import java.util.Objects;
-import java.util.Set;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentSkipListSet;
+
+import org.mydotey.samples.designpattern.objectpool.ObjectPoolEntry.Status;
 
 /**
  * @author koqizhao
@@ -14,11 +15,10 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public class ObjectPool {
 
-    protected volatile int _size;
-    protected ObjectPoolEntry[] _entries;
+    protected ConcurrentSkipListSet<Integer> _numberPool;
+    protected ConcurrentHashMap<Integer, ObjectPoolEntry> _entries;
 
-    protected Set<Integer> _usedIndexes;
-    protected BlockingQueue<Integer> _freeIndexes;
+    protected BlockingQueue<Integer> _availableNumbers;
 
     protected ObjectPoolConfig _config;
 
@@ -32,34 +32,67 @@ public class ObjectPool {
     }
 
     protected void init() {
-        _entries = new ObjectPoolEntry[_config.getMaxSize()];
+        _numberPool = new ConcurrentSkipListSet<>();
+        for (int i = 0; i < _config.getMaxSize(); i++)
+            _numberPool.add(new Integer(i));
 
-        _usedIndexes = Collections.newSetFromMap(new ConcurrentHashMap<Integer, Boolean>(_config.getMaxSize()));
-        _freeIndexes = new ArrayBlockingQueue<>(_config.getMaxSize());
+        _entries = new ConcurrentHashMap<>();
+        _availableNumbers = new ArrayBlockingQueue<>(_config.getMaxSize());
 
         _acquireLock = new Object();
 
-        scaleOut(_config.getMinSize());
+        tryAddNewEntry(_config.getMinSize());
     }
 
-    protected void scaleOut(int count) {
-        for (int i = 0; i < count && _size < _config.getMaxSize(); i++) {
-            _entries[_size] = newPoolEntry(new Integer(_size));
-            _freeIndexes.add(_entries[_size].getIndex());
-            _size++;
+    protected ObjectPoolEntry tryAddNewEntryAndAcquireOne() {
+        return tryCreateNewEntry();
+    }
+
+    protected void tryAddNewEntry(int count) {
+        for (int i = 0; i < count; i++)
+            tryAddNewEntry();
+    }
+
+    protected ObjectPoolEntry tryAddNewEntry() {
+        ObjectPoolEntry entry = tryCreateNewEntry();
+        if (entry != null)
+            _availableNumbers.add(entry.getNumber());
+
+        return entry;
+    }
+
+    protected ObjectPoolEntry tryCreateNewEntry() {
+        Integer number = _numberPool.pollFirst();
+        if (number == null)
+            return null;
+
+        ObjectPoolEntry entry = null;
+        try {
+            entry = newPoolEntry(number);
+        } catch (Exception e) {
+            _numberPool.add(number);
+            throw e;
         }
+
+        entry.setStatus(Status.AVAILABLE);
+        _entries.put(number, entry);
+        return entry;
+    }
+
+    protected ObjectPoolEntry newPoolEntry(Integer number) {
+        return new ObjectPoolEntry(number, newObject());
     }
 
     protected Object newObject() {
         Object obj = _config.getObjectFactory().get();
         if (obj == null)
-            throw new IllegalStateException("Got null from the object suppiler.");
+            throw new IllegalStateException("got null from the object factory");
 
         return obj;
     }
 
-    protected ObjectPoolEntry newPoolEntry(Integer index) {
-        return new ObjectPoolEntry(index, newObject());
+    protected ObjectPoolEntry getEntry(Integer number) {
+        return _entries.get(number);
     }
 
     public ObjectPoolConfig getConfig() {
@@ -67,61 +100,66 @@ public class ObjectPool {
     }
 
     public int getSize() {
-        return _size;
+        return _entries.size();
     }
 
     public ObjectPoolEntry acquire() throws InterruptedException {
-        if (_size < _config.getMaxSize()) {
-            ObjectPoolEntry entry = tryAcquire();
-            if (entry != null)
-                return entry;
+        ObjectPoolEntry entry = tryAcquire();
+        if (entry != null)
+            return entry;
+
+        Integer number = _availableNumbers.take();
+        return acquire(number);
+    }
+
+    public ObjectPoolEntry tryAcquire() {
+        if (_numberPool.size() > 0) {
+            Integer number = _availableNumbers.poll();
+            if (number != null)
+                return acquire(number);
 
             synchronized (_acquireLock) {
-                if (_size < _config.getMaxSize()) {
-                    entry = tryAcquire();
-                    if (entry != null)
-                        return entry;
+                if (_numberPool.size() > 0) {
+                    number = _availableNumbers.poll();
+                    if (number != null)
+                        return acquire(number);
 
-                    scaleOut(_config.getScaleFactor());
+                    ObjectPoolEntry entry = tryAddNewEntryAndAcquireOne();
+                    if (entry != null)
+                        return acquire(entry);
                 }
             }
         }
 
-        Integer index = _freeIndexes.take();
-        return acquire(index);
+        return null;
     }
 
-    public ObjectPoolEntry tryAcquire() {
-        Integer index = _freeIndexes.poll();
-        if (index == null)
-            return null;
-
-        return acquire(index);
+    protected ObjectPoolEntry acquire(Integer number) {
+        return acquire(getEntry(number));
     }
 
-    protected ObjectPoolEntry acquire(Integer index) {
-        _usedIndexes.add(index);
-        return _entries[index];
+    protected ObjectPoolEntry acquire(ObjectPoolEntry entry) {
+        entry.setStatus(Status.ACQUIRED);
+        return entry.clone();
     }
 
     public void release(ObjectPoolEntry entry) {
-        if (entry == null || entry.isReleased())
+        if (entry == null || entry.getStatus() == Status.RELEASED)
             return;
 
         synchronized (entry) {
-            if (entry.isReleased())
+            if (entry.getStatus() == Status.RELEASED)
                 return;
 
-            entry.setReleased();
+            entry.setStatus(Status.RELEASED);
         }
 
-        resetEntry(entry);
+        releaseNumber(entry.getNumber());
     }
 
-    protected void resetEntry(ObjectPoolEntry entry) {
-        _entries[entry.getIndex()] = entry.clone();
-        _usedIndexes.remove(entry.getIndex());
-        _freeIndexes.add(entry.getIndex());
+    protected void releaseNumber(Integer number) {
+        getEntry(number).setStatus(Status.AVAILABLE);
+        _availableNumbers.add(number);
     }
 
 }

@@ -1,6 +1,6 @@
-package org.mydotey.samples.designpattern.objectpool.autoscale.autorefreshed;
+package org.mydotey.samples.designpattern.objectpool.autoscale;
 
-import org.mydotey.samples.designpattern.objectpool.autoscale.ObjectPoolEntry;
+import org.mydotey.samples.designpattern.objectpool.ObjectPoolEntry;
 
 /**
  * @author koqizhao

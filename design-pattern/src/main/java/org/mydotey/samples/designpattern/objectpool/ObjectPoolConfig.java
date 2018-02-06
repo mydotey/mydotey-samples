@@ -15,7 +15,6 @@ public class ObjectPoolConfig implements Cloneable {
 
     private int minSize;
     private int maxSize;
-    private int scaleFactor;
     private Supplier<?> objectFactory;
 
     protected ObjectPoolConfig() {
@@ -28,10 +27,6 @@ public class ObjectPoolConfig implements Cloneable {
 
     public int getMaxSize() {
         return maxSize;
-    }
-
-    public int getScaleFactor() {
-        return scaleFactor;
     }
 
     public Supplier<?> getObjectFactory() {
@@ -53,7 +48,6 @@ public class ObjectPoolConfig implements Cloneable {
 
         protected Builder() {
             _config = newPoolConfig();
-            _config.scaleFactor = 1;
         }
 
         protected ObjectPoolConfig newPoolConfig() {
@@ -74,11 +68,6 @@ public class ObjectPoolConfig implements Cloneable {
             return this;
         }
 
-        public Builder setScaleFactor(int scaleFactor) {
-            _config.scaleFactor = scaleFactor;
-            return this;
-        }
-
         public Builder setObjectFactory(Supplier<?> objectFactory) {
             _config.objectFactory = objectFactory;
             return this;
@@ -94,12 +83,6 @@ public class ObjectPoolConfig implements Cloneable {
             if (_config.minSize > _config.maxSize)
                 throw new IllegalStateException(
                         "minSize is larger than maxSiz. minSize: " + _config.minSize + ", maxSize: " + _config.maxSize);
-
-            if (_config.scaleFactor <= 0)
-                throw new IllegalStateException("invalid scaleFactor: " + _config.scaleFactor);
-
-            if (_config.scaleFactor > _config.maxSize - _config.minSize)
-                throw new IllegalStateException("too large scaleFactor: " + _config.scaleFactor);
 
             if (_config.objectFactory == null)
                 throw new IllegalStateException("objectFactory is not set");

@@ -1,6 +1,6 @@
-package org.mydotey.samples.designpattern.objectpool.autorefreshed;
+package org.mydotey.samples.designpattern.objectpool.bak.autorefreshed;
 
-import org.mydotey.samples.designpattern.objectpool.ObjectPoolEntry;
+import org.mydotey.samples.designpattern.objectpool.bak.ObjectPoolEntry;
 
 /**
  * @author koqizhao

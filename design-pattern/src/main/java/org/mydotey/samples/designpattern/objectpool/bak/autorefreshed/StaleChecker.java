@@ -1,4 +1,4 @@
-package org.mydotey.samples.designpattern.objectpool.autoscale.autorefreshed;
+package org.mydotey.samples.designpattern.objectpool.bak.autorefreshed;
 
 /**
  * @author koqizhao

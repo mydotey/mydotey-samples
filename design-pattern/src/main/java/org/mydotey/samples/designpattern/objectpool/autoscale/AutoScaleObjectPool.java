@@ -1,13 +1,13 @@
-package org.mydotey.samples.designpattern.objectpool.autoscale.autorefreshed;
+package org.mydotey.samples.designpattern.objectpool.autoscale;
 
 import java.io.Closeable;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
-import org.mydotey.samples.designpattern.objectpool.autoscale.ObjectPool;
-import org.mydotey.samples.designpattern.objectpool.autoscale.ObjectPoolEntry;
-import org.mydotey.samples.designpattern.objectpool.autoscale.autorefreshed.AutoScaleObjectPoolEntry.Status;
+import org.mydotey.samples.designpattern.objectpool.ObjectPool;
+import org.mydotey.samples.designpattern.objectpool.ObjectPoolEntry;
+import org.mydotey.samples.designpattern.objectpool.autoscale.AutoScaleObjectPoolEntry.Status;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

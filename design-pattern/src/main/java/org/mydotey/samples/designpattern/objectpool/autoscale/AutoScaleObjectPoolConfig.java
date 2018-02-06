@@ -1,4 +1,4 @@
-package org.mydotey.samples.designpattern.objectpool.autorefreshed;
+package org.mydotey.samples.designpattern.objectpool.autoscale;
 
 import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
@@ -10,22 +10,28 @@ import org.mydotey.samples.designpattern.objectpool.ObjectPoolConfig;
  *
  * Feb 5, 2018
  */
-public class AutoRefreshedObjectPoolConfig extends ObjectPoolConfig {
+public class AutoScaleObjectPoolConfig extends ObjectPoolConfig {
 
     public static Builder newBuilder() {
         return new Builder();
     }
 
     private long objectTtl;
+    private long maxIdleTime;
     private StaleChecker staleChecker;
     private long staleCheckInterval;
+    private int scaleFactor;
 
-    protected AutoRefreshedObjectPoolConfig() {
+    protected AutoScaleObjectPoolConfig() {
 
     }
 
     public long getObjectTtl() {
         return objectTtl;
+    }
+
+    public long getMaxIdleTime() {
+        return maxIdleTime;
     }
 
     public StaleChecker getStaleChecker() {
@@ -36,22 +42,28 @@ public class AutoRefreshedObjectPoolConfig extends ObjectPoolConfig {
         return staleCheckInterval;
     }
 
+    public int getScaleFactor() {
+        return scaleFactor;
+    }
+
     public static class Builder extends ObjectPoolConfig.Builder {
 
         protected Builder() {
             getPoolConfig().objectTtl = Long.MAX_VALUE;
+            getPoolConfig().maxIdleTime = Long.MAX_VALUE;
             getPoolConfig().staleChecker = StaleChecker.DEFAULT;
             getPoolConfig().staleCheckInterval = TimeUnit.SECONDS.toMillis(1);
+            getPoolConfig().scaleFactor = 1;
         }
 
         @Override
-        protected AutoRefreshedObjectPoolConfig newPoolConfig() {
-            return new AutoRefreshedObjectPoolConfig();
+        protected AutoScaleObjectPoolConfig newPoolConfig() {
+            return new AutoScaleObjectPoolConfig();
         }
 
         @Override
-        protected AutoRefreshedObjectPoolConfig getPoolConfig() {
-            return (AutoRefreshedObjectPoolConfig) super.getPoolConfig();
+        protected AutoScaleObjectPoolConfig getPoolConfig() {
+            return (AutoScaleObjectPoolConfig) super.getPoolConfig();
         }
 
         @Override
@@ -65,17 +77,17 @@ public class AutoRefreshedObjectPoolConfig extends ObjectPoolConfig {
         }
 
         @Override
-        public Builder setScaleFactor(int scaleFactor) {
-            return (Builder) super.setScaleFactor(scaleFactor);
-        }
-
-        @Override
         public Builder setObjectFactory(Supplier<?> objectFactory) {
             return (Builder) super.setObjectFactory(objectFactory);
         }
 
         public Builder setObjectTtl(long objectTtl) {
             getPoolConfig().objectTtl = objectTtl;
+            return this;
+        }
+
+        public Builder setMaxIdleTime(long maxIdleTime) {
+            getPoolConfig().maxIdleTime = maxIdleTime;
             return this;
         }
 
@@ -89,10 +101,18 @@ public class AutoRefreshedObjectPoolConfig extends ObjectPoolConfig {
             return this;
         }
 
+        public Builder setScaleFactor(int scaleFactor) {
+            getPoolConfig().scaleFactor = scaleFactor;
+            return this;
+        }
+
         @Override
-        public AutoRefreshedObjectPoolConfig build() {
+        public AutoScaleObjectPoolConfig build() {
             if (getPoolConfig().objectTtl <= 0)
                 throw new IllegalStateException("objectTtl is invalid: " + getPoolConfig().objectTtl);
+
+            if (getPoolConfig().maxIdleTime <= 0)
+                throw new IllegalStateException("maxIdleTime is invalid: " + getPoolConfig().maxIdleTime);
 
             if (getPoolConfig().staleChecker == null)
                 throw new IllegalStateException("staleChecker is null.");
@@ -100,7 +120,13 @@ public class AutoRefreshedObjectPoolConfig extends ObjectPoolConfig {
             if (getPoolConfig().staleCheckInterval <= 0)
                 throw new IllegalStateException("staleCheckInterval is invalid: " + getPoolConfig().staleCheckInterval);
 
-            return (AutoRefreshedObjectPoolConfig) super.build();
+            if (getPoolConfig().scaleFactor <= 0)
+                throw new IllegalStateException("invalid scaleFactor: " + getPoolConfig().scaleFactor);
+
+            if (getPoolConfig().scaleFactor > getPoolConfig().getMaxSize() - getPoolConfig().getMinSize())
+                throw new IllegalStateException("too large scaleFactor: " + getPoolConfig().scaleFactor);
+
+            return (AutoScaleObjectPoolConfig) super.build();
         }
 
     }

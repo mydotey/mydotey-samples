@@ -1,12 +1,12 @@
-package org.mydotey.samples.designpattern.objectpool.autorefreshed;
+package org.mydotey.samples.designpattern.objectpool.bak.autorefreshed;
 
 import java.io.Closeable;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
-import org.mydotey.samples.designpattern.objectpool.ObjectPool;
-import org.mydotey.samples.designpattern.objectpool.ObjectPoolEntry;
+import org.mydotey.samples.designpattern.objectpool.bak.ObjectPool;
+import org.mydotey.samples.designpattern.objectpool.bak.ObjectPoolEntry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
