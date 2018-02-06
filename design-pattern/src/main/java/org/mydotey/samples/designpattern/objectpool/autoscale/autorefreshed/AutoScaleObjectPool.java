@@ -20,7 +20,6 @@ public class AutoScaleObjectPool extends ObjectPool implements Closeable {
 
     private static Logger _logger = LoggerFactory.getLogger(AutoScaleObjectPool.class);
 
-    protected Object _scaleLock;
     protected ScheduledExecutorService _scheduledExecutorService;
 
     public AutoScaleObjectPool(AutoScaleObjectPoolConfig config) {
@@ -31,7 +30,6 @@ public class AutoScaleObjectPool extends ObjectPool implements Closeable {
     protected void init() {
         super.init();
 
-        _scaleLock = new Object();
         _scheduledExecutorService = Executors.newSingleThreadScheduledExecutor(Executors.defaultThreadFactory());
         _scheduledExecutorService.scheduleWithFixedDelay(() -> AutoScaleObjectPool.this.autoCheck(),
                 getConfig().getStaleCheckInterval(), getConfig().getStaleCheckInterval(), TimeUnit.MILLISECONDS);
@@ -82,9 +80,10 @@ public class AutoScaleObjectPool extends ObjectPool implements Closeable {
     protected void releaseNumber(Integer number) {
         synchronized (number) {
             AutoScaleObjectPoolEntry entry = getEntry(number);
-            if (entry.getStatus() == Status.PENDING_CLOSE)
-                refresh(entry);
-            else
+            if (entry.getStatus() == Status.PENDING_CLOSE) {
+                if (!tryRefresh(entry))
+                    scaleIn(entry);
+            } else
                 entry.renew();
 
             super.releaseNumber(number);
@@ -113,12 +112,15 @@ public class AutoScaleObjectPool extends ObjectPool implements Closeable {
             if (!_availableNumbers.remove(number))
                 return false;
 
-            _entries.remove(number);
-            _numberPool.add(number);
-            close(entry);
-
+            scaleIn(entry);
             return true;
         }
+    }
+
+    protected void scaleIn(AutoScaleObjectPoolEntry entry) {
+        _entries.remove(entry.getNumber());
+        _numberPool.add(entry.getNumber());
+        close(entry);
     }
 
     protected boolean tryRefresh(Integer number) {
@@ -128,19 +130,32 @@ public class AutoScaleObjectPool extends ObjectPool implements Closeable {
             return false;
 
         synchronized (number) {
-            if (entry.getStatus() == Status.AVAILABLE) {
-                refresh(entry);
-                return true;
-            }
+            entry = getEntry(number);
+            needRefresh = isExpired(entry) || isStale(entry);
+            if (!needRefresh)
+                return false;
+
+            if (entry.getStatus() == Status.AVAILABLE)
+                return tryRefresh(entry);
 
             entry.setStatus(Status.PENDING_CLOSE);
             return false;
         }
     }
 
-    protected void refresh(AutoScaleObjectPoolEntry entry) {
+    protected boolean tryRefresh(AutoScaleObjectPoolEntry entry) {
+        AutoScaleObjectPoolEntry newEntry = null;
+        try {
+            newEntry = newPoolEntry(entry.getNumber());
+        } catch (Exception e) {
+            _logger.error("failed to get object from object factory", e);
+            return false;
+        }
+
         close(entry);
-        _entries.put(entry.getNumber(), newPoolEntry(entry.getNumber()));
+        _entries.put(entry.getNumber(), newEntry);
+
+        return true;
     }
 
     protected void close(AutoScaleObjectPoolEntry entry) {
@@ -148,7 +163,7 @@ public class AutoScaleObjectPool extends ObjectPool implements Closeable {
             try {
                 ((Closeable) entry.getObject()).close();
             } catch (Exception e) {
-                _logger.warn("close object failed.", e);
+                _logger.warn("close object failed", e);
             }
         }
 
@@ -168,7 +183,7 @@ public class AutoScaleObjectPool extends ObjectPool implements Closeable {
         try {
             return getConfig().getStaleChecker().isStale(entry.getObject());
         } catch (Exception e) {
-            _logger.warn("staleChecker thrown exception, ignore the check.", e);
+            _logger.warn("failed to invoke staleChecker, ignore the check", e);
             return false;
         }
     }

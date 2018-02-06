@@ -66,7 +66,14 @@ public class ObjectPool {
         if (number == null)
             return null;
 
-        ObjectPoolEntry entry = newPoolEntry(number);
+        ObjectPoolEntry entry = null;
+        try {
+            entry = newPoolEntry(number);
+        } catch (Exception e) {
+            _numberPool.add(number);
+            throw e;
+        }
+
         entry.setStatus(Status.AVAILABLE);
         _entries.put(number, entry);
         return entry;
@@ -79,7 +86,7 @@ public class ObjectPool {
     protected Object newObject() {
         Object obj = _config.getObjectFactory().get();
         if (obj == null)
-            throw new IllegalStateException("Got null from the object suppiler.");
+            throw new IllegalStateException("got null from the object factory");
 
         return obj;
     }
