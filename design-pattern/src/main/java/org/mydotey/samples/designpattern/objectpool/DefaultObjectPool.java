@@ -43,7 +43,11 @@ public class DefaultObjectPool<T> implements ObjectPool<T> {
     }
 
     protected DefaultEntry<T> tryAddNewEntryAndAcquireOne() {
-        return tryCreateNewEntry();
+        DefaultEntry<T> entry = tryCreateNewEntry();
+        if (entry != null)
+            _entries.put(entry.getNumber(), entry);
+
+        return entry;
     }
 
     protected void tryAddNewEntry(int count) {
@@ -53,8 +57,10 @@ public class DefaultObjectPool<T> implements ObjectPool<T> {
 
     protected DefaultEntry<T> tryAddNewEntry() {
         DefaultEntry<T> entry = tryCreateNewEntry();
-        if (entry != null)
+        if (entry != null) {
+            _entries.put(entry.getNumber(), entry);
             _availableNumbers.add(entry.getNumber());
+        }
 
         return entry;
     }
@@ -73,7 +79,6 @@ public class DefaultObjectPool<T> implements ObjectPool<T> {
         }
 
         entry.setStatus(DefaultEntry.Status.AVAILABLE);
-        _entries.put(number, entry);
         return entry;
     }
 

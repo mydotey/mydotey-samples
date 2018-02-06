@@ -40,9 +40,22 @@ public class DefaultAutoScaleObjectPool<T> extends DefaultObjectPool<T> implemen
 
     @Override
     protected DefaultEntry<T> tryAddNewEntryAndAcquireOne() {
-        DefaultEntry<T> entry = tryCreateNewEntry();
+        DefaultEntry<T> entry = super.tryAddNewEntryAndAcquireOne();
         if (entry != null)
             tryAddNewEntry(getConfig().getScaleFactor() - 1);
+
+        return entry;
+    }
+
+    @Override
+    protected AutoScaleEntry<T> tryAddNewEntry() {
+        AutoScaleEntry<T> entry = (AutoScaleEntry<T>) tryCreateNewEntry();
+        if (entry != null) {
+            synchronized (entry.getNumber()) {
+                _entries.put(entry.getNumber(), entry);
+                _availableNumbers.add(entry.getNumber());
+            }
+        }
 
         return entry;
     }
