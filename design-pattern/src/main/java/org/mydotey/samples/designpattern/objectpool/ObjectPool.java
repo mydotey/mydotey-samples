@@ -14,7 +14,7 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public class ObjectPool {
 
-    protected int _size;
+    protected volatile int _size;
     protected ObjectPoolEntry[] _entries;
 
     protected Set<Integer> _usedIndexes;
@@ -44,10 +44,6 @@ public class ObjectPool {
 
     protected void scaleOut(int count) {
         for (int i = 0; i < count && _size < _config.getMaxSize(); i++) {
-            Object obj = _config.getObjectFactory().get();
-            if (obj == null)
-                throw new IllegalStateException("Got null from the object suppiler.");
-
             _entries[_size] = newPoolEntry(new Integer(_size));
             _freeIndexes.add(_entries[_size].getIndex());
             _size++;
