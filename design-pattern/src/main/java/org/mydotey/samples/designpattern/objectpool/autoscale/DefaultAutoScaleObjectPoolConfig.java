@@ -10,11 +10,16 @@ import org.mydotey.samples.designpattern.objectpool.DefaultObjectPoolConfig;
  *
  * Feb 5, 2018
  */
-public class DefaultAutoScaleObjectPoolConfig extends DefaultObjectPoolConfig implements AutoScaleObjectPoolConfig {
+public class DefaultAutoScaleObjectPoolConfig<T> extends DefaultObjectPoolConfig<T>
+        implements AutoScaleObjectPoolConfig<T> {
+
+    public static <T> Builder<T> newBuilder() {
+        return new Builder<T>();
+    }
 
     private long objectTtl;
     private long maxIdleTime;
-    private StaleChecker staleChecker;
+    private StaleChecker<T> staleChecker;
     private long staleCheckInterval;
     private int scaleFactor;
 
@@ -33,7 +38,7 @@ public class DefaultAutoScaleObjectPoolConfig extends DefaultObjectPoolConfig im
     }
 
     @Override
-    public StaleChecker getStaleChecker() {
+    public StaleChecker<T> getStaleChecker() {
         return staleChecker;
     }
 
@@ -47,9 +52,11 @@ public class DefaultAutoScaleObjectPoolConfig extends DefaultObjectPoolConfig im
         return scaleFactor;
     }
 
-    public static class Builder extends DefaultObjectPoolConfig.Builder implements AutoScaleObjectPoolConfig.Builder {
+    public static class Builder<T> extends DefaultObjectPoolConfig.Builder<T>
+            implements AutoScaleObjectPoolConfig.Builder<T> {
 
-        public Builder() {
+        @SuppressWarnings("unchecked")
+        protected Builder() {
             getPoolConfig().objectTtl = Long.MAX_VALUE;
             getPoolConfig().maxIdleTime = Long.MAX_VALUE;
             getPoolConfig().staleChecker = StaleChecker.DEFAULT;
@@ -58,62 +65,62 @@ public class DefaultAutoScaleObjectPoolConfig extends DefaultObjectPoolConfig im
         }
 
         @Override
-        protected DefaultAutoScaleObjectPoolConfig newPoolConfig() {
-            return new DefaultAutoScaleObjectPoolConfig();
+        protected DefaultAutoScaleObjectPoolConfig<T> newPoolConfig() {
+            return new DefaultAutoScaleObjectPoolConfig<T>();
         }
 
         @Override
-        protected DefaultAutoScaleObjectPoolConfig getPoolConfig() {
-            return (DefaultAutoScaleObjectPoolConfig) super.getPoolConfig();
+        protected DefaultAutoScaleObjectPoolConfig<T> getPoolConfig() {
+            return (DefaultAutoScaleObjectPoolConfig<T>) super.getPoolConfig();
         }
 
         @Override
-        public Builder setMinSize(int minSize) {
-            return (Builder) super.setMinSize(minSize);
+        public Builder<T> setMinSize(int minSize) {
+            return (Builder<T>) super.setMinSize(minSize);
         }
 
         @Override
-        public Builder setMaxSize(int maxSize) {
-            return (Builder) super.setMaxSize(maxSize);
+        public Builder<T> setMaxSize(int maxSize) {
+            return (Builder<T>) super.setMaxSize(maxSize);
         }
 
         @Override
-        public Builder setObjectFactory(Supplier<?> objectFactory) {
-            return (Builder) super.setObjectFactory(objectFactory);
+        public Builder<T> setObjectFactory(Supplier<T> objectFactory) {
+            return (Builder<T>) super.setObjectFactory(objectFactory);
         }
 
         @Override
-        public Builder setObjectTtl(long objectTtl) {
+        public Builder<T> setObjectTtl(long objectTtl) {
             getPoolConfig().objectTtl = objectTtl;
             return this;
         }
 
         @Override
-        public Builder setMaxIdleTime(long maxIdleTime) {
+        public Builder<T> setMaxIdleTime(long maxIdleTime) {
             getPoolConfig().maxIdleTime = maxIdleTime;
             return this;
         }
 
         @Override
-        public Builder setStaleChecker(StaleChecker staleChecker) {
+        public Builder<T> setStaleChecker(StaleChecker<T> staleChecker) {
             getPoolConfig().staleChecker = staleChecker;
             return this;
         }
 
         @Override
-        public Builder setStaleCheckInterval(long staleCheckInterval) {
+        public Builder<T> setStaleCheckInterval(long staleCheckInterval) {
             getPoolConfig().staleCheckInterval = staleCheckInterval;
             return this;
         }
 
         @Override
-        public Builder setScaleFactor(int scaleFactor) {
+        public Builder<T> setScaleFactor(int scaleFactor) {
             getPoolConfig().scaleFactor = scaleFactor;
             return this;
         }
 
         @Override
-        public DefaultAutoScaleObjectPoolConfig build() {
+        public DefaultAutoScaleObjectPoolConfig<T> build() {
             if (getPoolConfig().objectTtl <= 0)
                 throw new IllegalStateException("objectTtl is invalid: " + getPoolConfig().objectTtl);
 
@@ -132,7 +139,7 @@ public class DefaultAutoScaleObjectPoolConfig extends DefaultObjectPoolConfig im
             if (getPoolConfig().scaleFactor > getPoolConfig().getMaxSize() - getPoolConfig().getMinSize())
                 throw new IllegalStateException("too large scaleFactor: " + getPoolConfig().scaleFactor);
 
-            return (DefaultAutoScaleObjectPoolConfig) super.build();
+            return (DefaultAutoScaleObjectPoolConfig<T>) super.build();
         }
 
     }

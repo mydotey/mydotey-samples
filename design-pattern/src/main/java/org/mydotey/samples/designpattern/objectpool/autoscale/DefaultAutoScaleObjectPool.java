@@ -14,13 +14,13 @@ import org.slf4j.LoggerFactory;
  *
  * Feb 5, 2018
  */
-public class DefaultAutoScaleObjectPool extends DefaultObjectPool implements AutoScaleObjectPool {
+public class DefaultAutoScaleObjectPool<T> extends DefaultObjectPool<T> implements AutoScaleObjectPool<T> {
 
     private static Logger _logger = LoggerFactory.getLogger(DefaultAutoScaleObjectPool.class);
 
     protected ScheduledExecutorService _scheduledExecutorService;
 
-    public DefaultAutoScaleObjectPool(AutoScaleObjectPoolConfig config) {
+    public DefaultAutoScaleObjectPool(AutoScaleObjectPoolConfig<T> config) {
         super(config);
     }
 
@@ -39,8 +39,8 @@ public class DefaultAutoScaleObjectPool extends DefaultObjectPool implements Aut
     }
 
     @Override
-    protected DefaultEntry tryAddNewEntryAndAcquireOne() {
-        DefaultEntry entry = tryCreateNewEntry();
+    protected DefaultEntry<T> tryAddNewEntryAndAcquireOne() {
+        DefaultEntry<T> entry = tryCreateNewEntry();
         if (entry != null)
             tryAddNewEntry(getConfig().getScaleFactor() - 1);
 
@@ -48,25 +48,25 @@ public class DefaultAutoScaleObjectPool extends DefaultObjectPool implements Aut
     }
 
     @Override
-    protected AutoScaleEntry newPoolEntry(Integer number) {
-        return new AutoScaleEntry(number, newObject());
+    protected AutoScaleEntry<T> newPoolEntry(Integer number) {
+        return new AutoScaleEntry<T>(number, newObject());
     }
 
     @Override
-    protected AutoScaleEntry getEntry(Integer number) {
-        return (AutoScaleEntry) super.getEntry(number);
+    protected AutoScaleEntry<T> getEntry(Integer number) {
+        return (AutoScaleEntry<T>) super.getEntry(number);
     }
 
     @Override
-    public AutoScaleObjectPoolConfig getConfig() {
-        return (AutoScaleObjectPoolConfig) super.getConfig();
+    public AutoScaleObjectPoolConfig<T> getConfig() {
+        return (AutoScaleObjectPoolConfig<T>) super.getConfig();
     }
 
     @Override
-    protected AutoScaleEntry acquire(Integer number) {
+    protected AutoScaleEntry<T> acquire(Integer number) {
         synchronized (number) {
             boolean success = tryRefresh(number);
-            AutoScaleEntry entry = (AutoScaleEntry) super.acquire(number);
+            AutoScaleEntry<T> entry = (AutoScaleEntry<T>) super.acquire(number);
             if (!success)
                 entry.renew();
 
@@ -77,7 +77,7 @@ public class DefaultAutoScaleObjectPool extends DefaultObjectPool implements Aut
     @Override
     protected void releaseNumber(Integer number) {
         synchronized (number) {
-            AutoScaleEntry entry = getEntry(number);
+            AutoScaleEntry<T> entry = getEntry(number);
             if (entry.getStatus() == AutoScaleEntry.Status.PENDING_CLOSE) {
                 if (!tryRefresh(entry))
                     scaleIn(entry);
@@ -98,7 +98,7 @@ public class DefaultAutoScaleObjectPool extends DefaultObjectPool implements Aut
     }
 
     protected boolean tryScaleIn(Integer number) {
-        AutoScaleEntry entry = getEntry(number);
+        AutoScaleEntry<T> entry = getEntry(number);
         if (!needScaleIn(entry))
             return false;
 
@@ -115,14 +115,14 @@ public class DefaultAutoScaleObjectPool extends DefaultObjectPool implements Aut
         }
     }
 
-    protected void scaleIn(AutoScaleEntry entry) {
+    protected void scaleIn(AutoScaleEntry<T> entry) {
         _entries.remove(entry.getNumber());
         _numberPool.add(entry.getNumber());
         close(entry);
     }
 
     protected boolean tryRefresh(Integer number) {
-        AutoScaleEntry entry = getEntry(number);
+        AutoScaleEntry<T> entry = getEntry(number);
         boolean needRefresh = isExpired(entry) || isStale(entry);
         if (!needRefresh)
             return false;
@@ -141,8 +141,8 @@ public class DefaultAutoScaleObjectPool extends DefaultObjectPool implements Aut
         }
     }
 
-    protected boolean tryRefresh(AutoScaleEntry entry) {
-        AutoScaleEntry newEntry = null;
+    protected boolean tryRefresh(AutoScaleEntry<T> entry) {
+        AutoScaleEntry<T> newEntry = null;
         try {
             newEntry = newPoolEntry(entry.getNumber());
         } catch (Exception e) {
@@ -156,7 +156,7 @@ public class DefaultAutoScaleObjectPool extends DefaultObjectPool implements Aut
         return true;
     }
 
-    protected void close(AutoScaleEntry entry) {
+    protected void close(AutoScaleEntry<T> entry) {
         if (entry.getObject() instanceof Closeable) {
             try {
                 ((Closeable) entry.getObject()).close();
@@ -168,16 +168,16 @@ public class DefaultAutoScaleObjectPool extends DefaultObjectPool implements Aut
         entry.setStatus(AutoScaleEntry.Status.CLOSED);
     }
 
-    protected boolean isExpired(AutoScaleEntry entry) {
+    protected boolean isExpired(AutoScaleEntry<T> entry) {
         return entry.getCreationTime() + getConfig().getObjectTtl() <= System.currentTimeMillis();
     }
 
-    protected boolean needScaleIn(AutoScaleEntry entry) {
+    protected boolean needScaleIn(AutoScaleEntry<T> entry) {
         return entry.getStatus() == AutoScaleEntry.Status.AVAILABLE
                 && entry.getLastUsedTime() + getConfig().getMaxIdleTime() <= System.currentTimeMillis();
     }
 
-    protected boolean isStale(AutoScaleEntry entry) {
+    protected boolean isStale(AutoScaleEntry<T> entry) {
         try {
             return getConfig().getStaleChecker().isStale(entry.getObject());
         } catch (Exception e) {
@@ -186,7 +186,7 @@ public class DefaultAutoScaleObjectPool extends DefaultObjectPool implements Aut
         }
     }
 
-    public static class AutoScaleEntry extends DefaultEntry {
+    public static class AutoScaleEntry<T> extends DefaultEntry<T> {
 
         protected interface Status extends DefaultEntry.Status {
             String PENDING_CLOSE = "pending_close";
@@ -196,7 +196,7 @@ public class DefaultAutoScaleObjectPool extends DefaultObjectPool implements Aut
         private long _creationTime;
         private volatile long _lastUsedTime;
 
-        protected AutoScaleEntry(Integer index, Object obj) {
+        protected AutoScaleEntry(Integer index, T obj) {
             super(index, obj);
 
             _creationTime = System.currentTimeMillis();

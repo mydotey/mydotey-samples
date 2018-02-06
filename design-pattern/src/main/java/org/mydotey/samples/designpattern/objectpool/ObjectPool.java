@@ -5,21 +5,21 @@ package org.mydotey.samples.designpattern.objectpool;
  *
  * Feb 6, 2018
  */
-public interface ObjectPool {
+public interface ObjectPool<T> {
 
-    ObjectPoolConfig getConfig();
+    ObjectPoolConfig<T> getConfig();
 
     int getSize();
 
-    Entry acquire() throws InterruptedException;
+    Entry<T> acquire() throws InterruptedException;
 
-    Entry tryAcquire();
+    Entry<T> tryAcquire();
 
-    void release(Entry entry);
+    void release(Entry<T> entry);
 
-    interface Entry {
+    interface Entry<T> {
 
-        Object getObject();
+        T getObject();
 
     }
 }

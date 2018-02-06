@@ -9,41 +9,41 @@ import org.mydotey.samples.designpattern.objectpool.ObjectPoolConfig;
  *
  * Feb 6, 2018
  */
-public interface AutoScaleObjectPoolConfig extends ObjectPoolConfig {
+public interface AutoScaleObjectPoolConfig<T> extends ObjectPoolConfig<T> {
 
     long getObjectTtl();
 
     long getMaxIdleTime();
 
-    StaleChecker getStaleChecker();
+    StaleChecker<T> getStaleChecker();
 
     long getStaleCheckInterval();
 
     int getScaleFactor();
 
-    interface Builder extends ObjectPoolConfig.Builder {
+    interface Builder<T> extends ObjectPoolConfig.Builder<T> {
 
         @Override
-        Builder setMinSize(int minSize);
+        Builder<T> setMinSize(int minSize);
 
         @Override
-        Builder setMaxSize(int maxSize);
+        Builder<T> setMaxSize(int maxSize);
 
         @Override
-        Builder setObjectFactory(Supplier<?> objectFactory);
+        Builder<T> setObjectFactory(Supplier<T> objectFactory);
 
         @Override
-        AutoScaleObjectPoolConfig build();
+        AutoScaleObjectPoolConfig<T> build();
 
-        Builder setObjectTtl(long objectTtl);
+        Builder<T> setObjectTtl(long objectTtl);
 
-        Builder setMaxIdleTime(long maxIdleTime);
+        Builder<T> setMaxIdleTime(long maxIdleTime);
 
-        Builder setStaleChecker(StaleChecker staleChecker);
+        Builder<T> setStaleChecker(StaleChecker<T> staleChecker);
 
-        Builder setStaleCheckInterval(long staleCheckInterval);
+        Builder<T> setStaleCheckInterval(long staleCheckInterval);
 
-        Builder setScaleFactor(int scaleFactor);
+        Builder<T> setScaleFactor(int scaleFactor);
 
     }
 

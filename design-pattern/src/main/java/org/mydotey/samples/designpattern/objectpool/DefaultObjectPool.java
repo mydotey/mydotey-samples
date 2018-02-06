@@ -11,18 +11,18 @@ import java.util.concurrent.ConcurrentSkipListSet;
  *
  * Feb 2, 2018
  */
-public class DefaultObjectPool implements ObjectPool {
+public class DefaultObjectPool<T> implements ObjectPool<T> {
 
     protected ConcurrentSkipListSet<Integer> _numberPool;
-    protected ConcurrentHashMap<Integer, DefaultEntry> _entries;
+    protected ConcurrentHashMap<Integer, Entry<T>> _entries;
 
     protected BlockingQueue<Integer> _availableNumbers;
 
-    protected ObjectPoolConfig _config;
+    protected ObjectPoolConfig<T> _config;
 
     protected Object _acquireLock;
 
-    public DefaultObjectPool(ObjectPoolConfig config) {
+    public DefaultObjectPool(ObjectPoolConfig<T> config) {
         Objects.requireNonNull(config, "config is null");
         _config = config;
 
@@ -42,7 +42,7 @@ public class DefaultObjectPool implements ObjectPool {
         tryAddNewEntry(_config.getMinSize());
     }
 
-    protected DefaultEntry tryAddNewEntryAndAcquireOne() {
+    protected DefaultEntry<T> tryAddNewEntryAndAcquireOne() {
         return tryCreateNewEntry();
     }
 
@@ -51,20 +51,20 @@ public class DefaultObjectPool implements ObjectPool {
             tryAddNewEntry();
     }
 
-    protected DefaultEntry tryAddNewEntry() {
-        DefaultEntry entry = tryCreateNewEntry();
+    protected DefaultEntry<T> tryAddNewEntry() {
+        DefaultEntry<T> entry = tryCreateNewEntry();
         if (entry != null)
             _availableNumbers.add(entry.getNumber());
 
         return entry;
     }
 
-    protected DefaultEntry tryCreateNewEntry() {
+    protected DefaultEntry<T> tryCreateNewEntry() {
         Integer number = _numberPool.pollFirst();
         if (number == null)
             return null;
 
-        DefaultEntry entry = null;
+        DefaultEntry<T> entry = null;
         try {
             entry = newPoolEntry(number);
         } catch (Exception e) {
@@ -77,24 +77,24 @@ public class DefaultObjectPool implements ObjectPool {
         return entry;
     }
 
-    protected DefaultEntry newPoolEntry(Integer number) {
-        return new DefaultEntry(number, newObject());
+    protected DefaultEntry<T> newPoolEntry(Integer number) {
+        return new DefaultEntry<T>(number, newObject());
     }
 
-    protected Object newObject() {
-        Object obj = _config.getObjectFactory().get();
+    protected T newObject() {
+        T obj = _config.getObjectFactory().get();
         if (obj == null)
             throw new IllegalStateException("got null from the object factory");
 
         return obj;
     }
 
-    protected DefaultEntry getEntry(Integer number) {
-        return _entries.get(number);
+    protected DefaultEntry<T> getEntry(Integer number) {
+        return (DefaultEntry<T>) _entries.get(number);
     }
 
     @Override
-    public ObjectPoolConfig getConfig() {
+    public ObjectPoolConfig<T> getConfig() {
         return _config;
     }
 
@@ -104,8 +104,8 @@ public class DefaultObjectPool implements ObjectPool {
     }
 
     @Override
-    public DefaultEntry acquire() throws InterruptedException {
-        DefaultEntry entry = tryAcquire();
+    public DefaultEntry<T> acquire() throws InterruptedException {
+        DefaultEntry<T> entry = tryAcquire();
         if (entry != null)
             return entry;
 
@@ -114,7 +114,7 @@ public class DefaultObjectPool implements ObjectPool {
     }
 
     @Override
-    public DefaultEntry tryAcquire() {
+    public DefaultEntry<T> tryAcquire() {
         if (_numberPool.size() > 0) {
             Integer number = _availableNumbers.poll();
             if (number != null)
@@ -126,7 +126,7 @@ public class DefaultObjectPool implements ObjectPool {
                     if (number != null)
                         return acquire(number);
 
-                    DefaultEntry entry = tryAddNewEntryAndAcquireOne();
+                    DefaultEntry<T> entry = tryAddNewEntryAndAcquireOne();
                     if (entry != null)
                         return acquire(entry);
                 }
@@ -136,18 +136,18 @@ public class DefaultObjectPool implements ObjectPool {
         return null;
     }
 
-    protected DefaultEntry acquire(Integer number) {
+    protected DefaultEntry<T> acquire(Integer number) {
         return acquire(getEntry(number));
     }
 
-    protected DefaultEntry acquire(DefaultEntry entry) {
+    protected DefaultEntry<T> acquire(DefaultEntry<T> entry) {
         entry.setStatus(DefaultEntry.Status.ACQUIRED);
         return entry.clone();
     }
 
     @Override
-    public void release(Entry entry) {
-        DefaultEntry defaultEntry = (DefaultEntry) entry;
+    public void release(Entry<T> entry) {
+        DefaultEntry<T> defaultEntry = (DefaultEntry<T>) entry;
         if (defaultEntry == null || defaultEntry.getStatus() == DefaultEntry.Status.RELEASED)
             return;
 
@@ -166,7 +166,7 @@ public class DefaultObjectPool implements ObjectPool {
         _availableNumbers.add(number);
     }
 
-    public static class DefaultEntry implements Entry, Cloneable {
+    public static class DefaultEntry<T> implements Entry<T>, Cloneable {
 
         protected interface Status {
             String AVAILABLE = "available";
@@ -177,9 +177,9 @@ public class DefaultObjectPool implements ObjectPool {
         private Integer _number;
         private volatile String _status;
 
-        private Object _obj;
+        private T _obj;
 
-        protected DefaultEntry(Integer number, Object obj) {
+        protected DefaultEntry(Integer number, T obj) {
             _number = number;
             _obj = obj;
         }
@@ -197,14 +197,15 @@ public class DefaultObjectPool implements ObjectPool {
         }
 
         @Override
-        public Object getObject() {
+        public T getObject() {
             return _obj;
         }
 
+        @SuppressWarnings("unchecked")
         @Override
-        public DefaultEntry clone() {
+        public DefaultEntry<T> clone() {
             try {
-                return (DefaultEntry) super.clone();
+                return (DefaultEntry<T>) super.clone();
             } catch (CloneNotSupportedException e) {
                 throw new UnsupportedOperationException(e);
             }

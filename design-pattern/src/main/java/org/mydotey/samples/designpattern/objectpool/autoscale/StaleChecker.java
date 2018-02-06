@@ -5,9 +5,10 @@ package org.mydotey.samples.designpattern.objectpool.autoscale;
  *
  * Feb 5, 2018
  */
-public interface StaleChecker {
+public interface StaleChecker<T> {
 
-    static StaleChecker DEFAULT = new StaleChecker() {
+    @SuppressWarnings("rawtypes")
+    static StaleChecker DEFAULT = new StaleChecker<Object>() {
 
         @Override
         public boolean isStale(Object obj) {
@@ -16,6 +17,6 @@ public interface StaleChecker {
 
     };
 
-    boolean isStale(Object obj);
+    boolean isStale(T obj);
 
 }

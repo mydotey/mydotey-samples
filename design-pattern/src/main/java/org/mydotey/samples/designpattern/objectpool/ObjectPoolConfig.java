@@ -7,23 +7,23 @@ import java.util.function.Supplier;
  *
  * Feb 6, 2018
  */
-public interface ObjectPoolConfig {
+public interface ObjectPoolConfig<T> {
 
     int getMinSize();
 
     int getMaxSize();
 
-    Supplier<?> getObjectFactory();
+    Supplier<T> getObjectFactory();
 
-    interface Builder {
+    interface Builder<T> {
 
-        Builder setMinSize(int minSize);
+        Builder<T> setMinSize(int minSize);
 
-        Builder setMaxSize(int maxSize);
+        Builder<T> setMaxSize(int maxSize);
 
-        Builder setObjectFactory(Supplier<?> objectFactory);
+        Builder<T> setObjectFactory(Supplier<T> objectFactory);
 
-        ObjectPoolConfig build();
+        ObjectPoolConfig<T> build();
 
     }
 

@@ -9,9 +9,9 @@ import org.mydotey.samples.designpattern.objectpool.ObjectPool;
  *
  * Feb 6, 2018
  */
-public interface AutoScaleObjectPool extends ObjectPool, Closeable {
+public interface AutoScaleObjectPool<T> extends ObjectPool<T>, Closeable {
 
     @Override
-    AutoScaleObjectPoolConfig getConfig();
+    AutoScaleObjectPoolConfig<T> getConfig();
 
 }

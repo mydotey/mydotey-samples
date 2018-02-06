@@ -7,15 +7,15 @@ import java.util.function.Supplier;
  *
  * Feb 2, 2018
  */
-public class DefaultObjectPoolConfig implements ObjectPoolConfig, Cloneable {
+public class DefaultObjectPoolConfig<T> implements ObjectPoolConfig<T>, Cloneable {
 
-    public static Builder newBuilder() {
-        return new Builder();
+    public static <T> Builder<T> newBuilder() {
+        return new Builder<T>();
     }
 
     private int minSize;
     private int maxSize;
-    private Supplier<?> objectFactory;
+    private Supplier<T> objectFactory;
 
     protected DefaultObjectPoolConfig() {
 
@@ -32,55 +32,56 @@ public class DefaultObjectPoolConfig implements ObjectPoolConfig, Cloneable {
     }
 
     @Override
-    public Supplier<?> getObjectFactory() {
+    public Supplier<T> getObjectFactory() {
         return objectFactory;
     }
 
+    @SuppressWarnings("unchecked")
     @Override
-    protected DefaultObjectPoolConfig clone() {
+    protected DefaultObjectPoolConfig<T> clone() {
         try {
-            return (DefaultObjectPoolConfig) super.clone();
+            return (DefaultObjectPoolConfig<T>) super.clone();
         } catch (CloneNotSupportedException e) {
             throw new UnsupportedOperationException(e);
         }
     }
 
-    public static class Builder implements ObjectPoolConfig.Builder {
+    public static class Builder<T> implements ObjectPoolConfig.Builder<T> {
 
-        protected DefaultObjectPoolConfig _config;
+        protected DefaultObjectPoolConfig<T> _config;
 
         protected Builder() {
             _config = newPoolConfig();
         }
 
-        protected DefaultObjectPoolConfig newPoolConfig() {
-            return new DefaultObjectPoolConfig();
+        protected DefaultObjectPoolConfig<T> newPoolConfig() {
+            return new DefaultObjectPoolConfig<T>();
         }
 
-        protected DefaultObjectPoolConfig getPoolConfig() {
+        protected DefaultObjectPoolConfig<T> getPoolConfig() {
             return _config;
         }
 
         @Override
-        public Builder setMinSize(int minSize) {
+        public Builder<T> setMinSize(int minSize) {
             _config.minSize = minSize;
             return this;
         }
 
         @Override
-        public Builder setMaxSize(int maxSize) {
+        public Builder<T> setMaxSize(int maxSize) {
             _config.maxSize = maxSize;
             return this;
         }
 
         @Override
-        public Builder setObjectFactory(Supplier<?> objectFactory) {
+        public Builder<T> setObjectFactory(Supplier<T> objectFactory) {
             _config.objectFactory = objectFactory;
             return this;
         }
 
         @Override
-        public DefaultObjectPoolConfig build() {
+        public DefaultObjectPoolConfig<T> build() {
             if (_config.minSize < 0)
                 throw new IllegalStateException("minSize is invalid: " + _config.minSize);
 
