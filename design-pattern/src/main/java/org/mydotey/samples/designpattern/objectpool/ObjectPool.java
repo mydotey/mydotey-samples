@@ -92,8 +92,7 @@ public class ObjectPool {
         }
 
         Integer index = _freeIndexes.take();
-        _usedIndexes.add(index);
-        return _entries[index];
+        return acquire(index);
     }
 
     public ObjectPoolEntry tryAcquire() {
@@ -101,6 +100,10 @@ public class ObjectPool {
         if (index == null)
             return null;
 
+        return acquire(index);
+    }
+
+    protected ObjectPoolEntry acquire(Integer index) {
         _usedIndexes.add(index);
         return _entries[index];
     }
@@ -116,6 +119,10 @@ public class ObjectPool {
             entry.setReleased();
         }
 
+        resetEntry(entry);
+    }
+
+    protected void resetEntry(ObjectPoolEntry entry) {
         _entries[entry.getIndex()] = entry.clone();
         _usedIndexes.remove(entry.getIndex());
         _freeIndexes.add(entry.getIndex());

@@ -50,37 +50,7 @@ public class AutoRefreshedObjectPool extends ObjectPool implements Closeable {
     }
 
     @Override
-    public ObjectPoolEntry acquire() throws InterruptedException {
-        if (_size < _config.getMaxSize()) {
-            ObjectPoolEntry entry = tryAcquire();
-            if (entry != null)
-                return entry;
-
-            synchronized (_acquireLock) {
-                if (_size < _config.getMaxSize()) {
-                    entry = tryAcquire();
-                    if (entry != null)
-                        return entry;
-
-                    scaleOut(_config.getScaleFactor());
-                }
-            }
-        }
-
-        Integer index = _freeIndexes.take();
-        return getEntry(index);
-    }
-
-    @Override
-    public ObjectPoolEntry tryAcquire() {
-        Integer index = _freeIndexes.poll();
-        if (index == null)
-            return null;
-
-        return getEntry(index);
-    }
-
-    private ObjectPoolEntry getEntry(Integer index) {
+    protected ObjectPoolEntry acquire(Integer index) {
         synchronized (index) {
             tryRefresh((AutoRefreshedObjectPoolEntry) _entries[index]);
             _freeIndexes.remove(index);
@@ -90,18 +60,8 @@ public class AutoRefreshedObjectPool extends ObjectPool implements Closeable {
     }
 
     @Override
-    public void release(ObjectPoolEntry entry) {
+    protected void resetEntry(ObjectPoolEntry entry) {
         AutoRefreshedObjectPoolEntry concreteEntry = (AutoRefreshedObjectPoolEntry) entry;
-        if (entry == null || concreteEntry.isReleased())
-            return;
-
-        synchronized (concreteEntry) {
-            if (concreteEntry.isReleased())
-                return;
-
-            concreteEntry.setReleased();
-        }
-
         synchronized (concreteEntry.getIndex()) {
             if (concreteEntry.isClosable()) {
                 close(concreteEntry);

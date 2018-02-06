@@ -15,7 +15,7 @@ public class AutoRefreshedObjectPoolEntry extends ObjectPoolEntry {
     protected AutoRefreshedObjectPoolEntry(Integer index, Object obj) {
         super(index, obj);
 
-        renew();
+        _creationTime = System.currentTimeMillis();
     }
 
     @Override
@@ -43,10 +43,6 @@ public class AutoRefreshedObjectPoolEntry extends ObjectPoolEntry {
 
     protected long getCreationTime() {
         return _creationTime;
-    }
-
-    protected void renew() {
-        _creationTime = System.currentTimeMillis();
     }
 
 }
