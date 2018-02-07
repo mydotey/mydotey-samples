@@ -147,12 +147,20 @@ public class DefaultObjectPool<T> implements ObjectPool<T> {
     public DefaultEntry<T> tryAcquire() {
         Integer number = _availableNumbers.poll();
         if (number != null)
-            return acquire(number);
+            return tryAcquire(number);
 
         return tryAddNewEntryAndAcquireOne();
     }
 
-    protected DefaultEntry<T> acquire(Integer number) {
+    protected DefaultEntry<T> tryAcquire(Integer number) {
+        return doAcquire(number);
+    }
+
+    protected DefaultEntry<T> acquire(Integer number) throws InterruptedException {
+        return doAcquire(number);
+    }
+
+    protected DefaultEntry<T> doAcquire(Integer number) {
         DefaultEntry<T> entry = getEntry(number);
         entry.setStatus(DefaultEntry.Status.ACQUIRED);
         return entry.clone();
@@ -231,7 +239,7 @@ public class DefaultObjectPool<T> implements ObjectPool<T> {
         private Integer _number;
         private volatile String _status;
 
-        private T _obj;
+        private volatile T _obj;
 
         protected DefaultEntry(Integer number, T obj) {
             _number = number;

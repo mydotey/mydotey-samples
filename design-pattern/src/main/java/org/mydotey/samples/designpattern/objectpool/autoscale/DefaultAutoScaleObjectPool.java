@@ -83,15 +83,38 @@ public class DefaultAutoScaleObjectPool<T> extends DefaultObjectPool<T> implemen
     }
 
     @Override
-    protected AutoScaleEntry<T> acquire(Integer number) {
-        synchronized (number) {
-            boolean success = tryRefresh(number);
-            AutoScaleEntry<T> entry = (AutoScaleEntry<T>) super.acquire(number);
-            if (!success)
-                entry.renew();
-
+    protected AutoScaleEntry<T> tryAcquire(Integer number) {
+        AutoScaleEntry<T> entry = doAcquire(number);
+        if (entry != null)
             return entry;
+
+        return (AutoScaleEntry<T>) tryAcquire();
+    }
+
+    @Override
+    protected AutoScaleEntry<T> acquire(Integer number) throws InterruptedException {
+        AutoScaleEntry<T> entry = doAcquire(number);
+        if (entry != null)
+            return entry;
+
+        return (AutoScaleEntry<T>) acquire();
+    }
+
+    @Override
+    protected AutoScaleEntry<T> doAcquire(Integer number) {
+        AutoScaleEntry<T> entry;
+        synchronized (number) {
+            entry = (AutoScaleEntry<T>) super.doAcquire(number);
+            if (!needRefresh(entry)) {
+                entry.renew();
+                return entry;
+            } else {
+                entry.setStatus(AutoScaleEntry.Status.PENDING_REFRESH);
+            }
         }
+
+        _releaseExecutor.submit(() -> doReleaseNumber(number));
+        return null;
     }
 
     @Override
@@ -102,7 +125,7 @@ public class DefaultAutoScaleObjectPool<T> extends DefaultObjectPool<T> implemen
     protected void doReleaseNumber(Integer number) {
         synchronized (number) {
             AutoScaleEntry<T> entry = getEntry(number);
-            if (entry.getStatus() == AutoScaleEntry.Status.PENDING_CLOSE) {
+            if (entry.getStatus() == AutoScaleEntry.Status.PENDING_REFRESH) {
                 if (!tryRefresh(entry))
                     scaleIn(entry);
             } else
@@ -149,20 +172,18 @@ public class DefaultAutoScaleObjectPool<T> extends DefaultObjectPool<T> implemen
 
     protected boolean tryRefresh(Integer number) {
         AutoScaleEntry<T> entry = getEntry(number);
-        boolean needRefresh = isExpired(entry) || isStale(entry);
-        if (!needRefresh)
+        if (!needRefresh(entry))
             return false;
 
         synchronized (number) {
             entry = getEntry(number);
-            needRefresh = isExpired(entry) || isStale(entry);
-            if (!needRefresh)
+            if (!needRefresh(entry))
                 return false;
 
             if (entry.getStatus() == AutoScaleEntry.Status.AVAILABLE)
                 return tryRefresh(entry);
 
-            entry.setStatus(AutoScaleEntry.Status.PENDING_CLOSE);
+            entry.setStatus(AutoScaleEntry.Status.PENDING_REFRESH);
             return false;
         }
     }
@@ -182,14 +203,12 @@ public class DefaultAutoScaleObjectPool<T> extends DefaultObjectPool<T> implemen
         return true;
     }
 
-    protected boolean isExpired(AutoScaleEntry<T> entry) {
-        return entry.getCreationTime() + getConfig().getObjectTtl() <= System.currentTimeMillis();
+    protected boolean needRefresh(AutoScaleEntry<T> entry) {
+        return isExpired(entry) || isStale(entry);
     }
 
-    protected boolean needScaleIn(AutoScaleEntry<T> entry) {
-        return entry.getStatus() == AutoScaleEntry.Status.AVAILABLE
-                && entry.getLastUsedTime() + getConfig().getMaxIdleTime() <= System.currentTimeMillis()
-                && getSize() > getConfig().getMinSize();
+    protected boolean isExpired(AutoScaleEntry<T> entry) {
+        return entry.getCreationTime() + getConfig().getObjectTtl() <= System.currentTimeMillis();
     }
 
     protected boolean isStale(AutoScaleEntry<T> entry) {
@@ -199,6 +218,12 @@ public class DefaultAutoScaleObjectPool<T> extends DefaultObjectPool<T> implemen
             _logger.error("staleChecker failed, ignore", e);
             return false;
         }
+    }
+
+    protected boolean needScaleIn(AutoScaleEntry<T> entry) {
+        return entry.getStatus() == AutoScaleEntry.Status.AVAILABLE
+                && entry.getLastUsedTime() + getConfig().getMaxIdleTime() <= System.currentTimeMillis()
+                && getSize() > getConfig().getMinSize();
     }
 
     @Override
@@ -216,7 +241,7 @@ public class DefaultAutoScaleObjectPool<T> extends DefaultObjectPool<T> implemen
     protected static class AutoScaleEntry<T> extends DefaultEntry<T> {
 
         protected interface Status extends DefaultEntry.Status {
-            String PENDING_CLOSE = "pending_close";
+            String PENDING_REFRESH = "pending_refresh";
         }
 
         private long _creationTime;
