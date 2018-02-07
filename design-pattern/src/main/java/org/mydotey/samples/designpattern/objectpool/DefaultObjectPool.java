@@ -43,7 +43,7 @@ public class DefaultObjectPool<T> implements ObjectPool<T> {
         for (int i = 0; i < _config.getMaxSize(); i++)
             _numberPool.add(new Integer(i));
 
-        _entries = new ConcurrentHashMap<>();
+        _entries = new ConcurrentHashMap<>(_config.getMaxSize());
         _availableNumbers = new ArrayBlockingQueue<>(_config.getMaxSize());
 
         tryAddNewEntry(_config.getMinSize());

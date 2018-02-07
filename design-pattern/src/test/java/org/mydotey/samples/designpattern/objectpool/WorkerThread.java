@@ -31,7 +31,7 @@ public class WorkerThread extends Thread {
 
     @Override
     public void run() {
-        while (!interrupted() && getState() != Thread.State.TERMINATED) {
+        while (!isInterrupted()) {
             synchronized (_lock) {
                 try {
                     _lock.wait();
