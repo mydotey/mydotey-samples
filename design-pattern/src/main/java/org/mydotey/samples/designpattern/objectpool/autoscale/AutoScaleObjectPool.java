@@ -1,7 +1,5 @@
 package org.mydotey.samples.designpattern.objectpool.autoscale;
 
-import java.io.Closeable;
-
 import org.mydotey.samples.designpattern.objectpool.ObjectPool;
 
 /**
@@ -9,7 +7,7 @@ import org.mydotey.samples.designpattern.objectpool.ObjectPool;
  *
  * Feb 6, 2018
  */
-public interface AutoScaleObjectPool<T> extends ObjectPool<T>, Closeable {
+public interface AutoScaleObjectPool<T> extends ObjectPool<T> {
 
     @Override
     AutoScaleObjectPoolConfig<T> getConfig();

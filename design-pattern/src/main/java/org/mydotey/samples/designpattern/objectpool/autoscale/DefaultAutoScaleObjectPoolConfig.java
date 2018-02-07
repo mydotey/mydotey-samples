@@ -97,6 +97,11 @@ public class DefaultAutoScaleObjectPoolConfig<T> extends DefaultObjectPoolConfig
         }
 
         @Override
+        public Builder<T> setOnClose(Consumer<T> onClose) {
+            return (Builder<T>) super.setOnClose(onClose);
+        }
+
+        @Override
         public Builder<T> setObjectTtl(long objectTtl) {
             getPoolConfig().objectTtl = objectTtl;
             return this;

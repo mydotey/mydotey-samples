@@ -38,6 +38,9 @@ public interface AutoScaleObjectPoolConfig<T> extends ObjectPoolConfig<T> {
         Builder<T> setOnEntryCreate(Consumer<ObjectPool.Entry<T>> onEntryCreate);
 
         @Override
+        Builder<T> setOnClose(Consumer<T> onClose);
+
+        @Override
         AutoScaleObjectPoolConfig<T> build();
 
         Builder<T> setObjectTtl(long objectTtl);

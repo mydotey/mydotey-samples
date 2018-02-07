@@ -1,6 +1,5 @@
 package org.mydotey.samples.designpattern.objectpool.autoscale;
 
-import java.io.Closeable;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -33,11 +32,6 @@ public class DefaultAutoScaleObjectPool<T> extends DefaultObjectPool<T> implemen
         _scheduledExecutorService = Executors.newSingleThreadScheduledExecutor(Executors.defaultThreadFactory());
         _scheduledExecutorService.scheduleWithFixedDelay(() -> DefaultAutoScaleObjectPool.this.autoCheck(),
                 getConfig().getCheckInterval(), getConfig().getCheckInterval(), TimeUnit.MILLISECONDS);
-    }
-
-    @Override
-    public void close() {
-        _scheduledExecutorService.shutdown();
     }
 
     @Override
@@ -180,18 +174,6 @@ public class DefaultAutoScaleObjectPool<T> extends DefaultObjectPool<T> implemen
         return true;
     }
 
-    protected void close(AutoScaleEntry<T> entry) {
-        if (entry.getObject() instanceof Closeable) {
-            try {
-                ((Closeable) entry.getObject()).close();
-            } catch (Exception e) {
-                _logger.warn("close object failed", e);
-            }
-        }
-
-        entry.setStatus(AutoScaleEntry.Status.CLOSED);
-    }
-
     protected boolean isExpired(AutoScaleEntry<T> entry) {
         return entry.getCreationTime() + getConfig().getObjectTtl() <= System.currentTimeMillis();
     }
@@ -206,8 +188,19 @@ public class DefaultAutoScaleObjectPool<T> extends DefaultObjectPool<T> implemen
         try {
             return getConfig().getStaleChecker().isStale(entry.getObject());
         } catch (Exception e) {
-            _logger.error("failed to invoke staleChecker, ignore the check", e);
+            _logger.error("staleChecker failed, ignore", e);
             return false;
+        }
+    }
+
+    @Override
+    public void doClose() {
+        super.doClose();
+
+        try {
+            _scheduledExecutorService.shutdown();
+        } catch (Exception e) {
+            _logger.error("shutdown thread pool failed.", e);
         }
     }
 
@@ -215,7 +208,6 @@ public class DefaultAutoScaleObjectPool<T> extends DefaultObjectPool<T> implemen
 
         protected interface Status extends DefaultEntry.Status {
             String PENDING_CLOSE = "pending_close";
-            String CLOSED = "closed";
         }
 
         private long _creationTime;

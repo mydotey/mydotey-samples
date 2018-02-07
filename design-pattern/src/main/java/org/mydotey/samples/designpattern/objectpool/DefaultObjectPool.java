@@ -1,10 +1,14 @@
 package org.mydotey.samples.designpattern.objectpool;
 
+import java.io.IOException;
 import java.util.Objects;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentSkipListSet;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * @author koqizhao
@@ -12,6 +16,11 @@ import java.util.concurrent.ConcurrentSkipListSet;
  * Feb 2, 2018
  */
 public class DefaultObjectPool<T> implements ObjectPool<T> {
+
+    private static Logger _logger = LoggerFactory.getLogger(DefaultObjectPool.class);
+
+    protected volatile boolean _isClosed;
+    protected Object _closeLock;
 
     protected ConcurrentSkipListSet<Integer> _numberPool;
     protected ConcurrentHashMap<Integer, Entry<T>> _entries;
@@ -28,6 +37,8 @@ public class DefaultObjectPool<T> implements ObjectPool<T> {
     }
 
     protected void init() {
+        _closeLock = new Object();
+
         _numberPool = new ConcurrentSkipListSet<>();
         for (int i = 0; i < _config.getMaxSize(); i++)
             _numberPool.add(new Integer(i));
@@ -54,25 +65,40 @@ public class DefaultObjectPool<T> implements ObjectPool<T> {
     }
 
     protected DefaultEntry<T> tryCreateNewEntry() {
+        if (isClosed())
+            return null;
+
         Integer number = _numberPool.pollFirst();
         if (number == null)
             return null;
 
-        DefaultEntry<T> entry = null;
-        try {
-            entry = newPoolEntry(number);
-        } catch (Exception e) {
-            _numberPool.add(number);
-            throw e;
-        }
+        synchronized (_closeLock) {
+            if (isClosed())
+                return null;
 
-        entry.setStatus(DefaultEntry.Status.AVAILABLE);
-        return entry;
+            DefaultEntry<T> entry = null;
+            try {
+                entry = newPoolEntry(number);
+            } catch (Exception e) {
+                _numberPool.add(number);
+                _logger.error("failed to new object", e);
+                throw e;
+            }
+
+            entry.setStatus(DefaultEntry.Status.AVAILABLE);
+            return entry;
+        }
     }
 
     protected DefaultEntry<T> newPoolEntry(Integer number) {
         DefaultEntry<T> entry = newConcretePoolEntry(number);
-        _config.getOnEntryCreate().accept(entry);
+        try {
+            _config.getOnEntryCreate().accept(entry);
+        } catch (Exception e) {
+            _logger.error("onEntryCreate failed", e);
+            throw e;
+        }
+
         return entry;
     }
 
@@ -100,6 +126,11 @@ public class DefaultObjectPool<T> implements ObjectPool<T> {
     @Override
     public int getSize() {
         return _entries.size();
+    }
+
+    @Override
+    public boolean isClosed() {
+        return _isClosed;
     }
 
     @Override
@@ -158,12 +189,43 @@ public class DefaultObjectPool<T> implements ObjectPool<T> {
         _availableNumbers.add(number);
     }
 
+    @Override
+    public void close() throws IOException {
+        if (isClosed())
+            return;
+
+        synchronized (_closeLock) {
+            if (isClosed())
+                return;
+
+            _isClosed = true;
+            doClose();
+        }
+    }
+
+    protected void doClose() {
+        for (Entry<T> entry : _entries.values()) {
+            close((DefaultEntry<T>) entry);
+        }
+    }
+
+    protected void close(DefaultEntry<T> entry) {
+        entry.setStatus(DefaultEntry.Status.CLOSED);
+
+        try {
+            _config.getOnClose().accept(entry.getObject());
+        } catch (Exception e) {
+            _logger.error("close object failed", e);
+        }
+    }
+
     public static class DefaultEntry<T> implements Entry<T>, Cloneable {
 
         protected interface Status {
             String AVAILABLE = "available";
             String ACQUIRED = "acquired";
             String RELEASED = "released";
+            String CLOSED = "closed";
         }
 
         private Integer _number;
