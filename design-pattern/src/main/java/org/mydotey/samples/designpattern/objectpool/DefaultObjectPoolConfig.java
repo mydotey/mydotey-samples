@@ -19,11 +19,11 @@ public class DefaultObjectPoolConfig<T> implements ObjectPoolConfig<T>, Cloneabl
         return new Builder<T>();
     }
 
-    private int minSize;
-    private int maxSize;
-    private Supplier<T> objectFactory;
-    private Consumer<Entry<T>> onCreate;
-    private Consumer<Entry<T>> onClose;
+    private int _minSize;
+    private int _maxSize;
+    private Supplier<T> _objectFactory;
+    private Consumer<Entry<T>> _onCreate;
+    private Consumer<Entry<T>> _onClose;
 
     protected DefaultObjectPoolConfig() {
 
@@ -31,27 +31,27 @@ public class DefaultObjectPoolConfig<T> implements ObjectPoolConfig<T>, Cloneabl
 
     @Override
     public int getMinSize() {
-        return minSize;
+        return _minSize;
     }
 
     @Override
     public int getMaxSize() {
-        return maxSize;
+        return _maxSize;
     }
 
     @Override
     public Supplier<T> getObjectFactory() {
-        return objectFactory;
+        return _objectFactory;
     }
 
     @Override
     public Consumer<Entry<T>> getOnCreate() {
-        return onCreate;
+        return _onCreate;
     }
 
     @Override
     public Consumer<Entry<T>> getOnClose() {
-        return onClose;
+        return _onClose;
     }
 
     @SuppressWarnings("unchecked")
@@ -88,8 +88,8 @@ public class DefaultObjectPoolConfig<T> implements ObjectPoolConfig<T>, Cloneabl
         @SuppressWarnings({ "unchecked", "rawtypes" })
         protected Builder() {
             _config = newPoolConfig();
-            _config.onCreate = (Consumer) DEFAULT_ON_ENTRY_CREATE;
-            _config.onClose = (Consumer) DEFAULT_ON_CLOSE;
+            _config._onCreate = (Consumer) DEFAULT_ON_ENTRY_CREATE;
+            _config._onClose = (Consumer) DEFAULT_ON_CLOSE;
         }
 
         protected DefaultObjectPoolConfig<T> newPoolConfig() {
@@ -102,53 +102,53 @@ public class DefaultObjectPoolConfig<T> implements ObjectPoolConfig<T>, Cloneabl
 
         @Override
         public Builder<T> setMinSize(int minSize) {
-            _config.minSize = minSize;
+            _config._minSize = minSize;
             return this;
         }
 
         @Override
         public Builder<T> setMaxSize(int maxSize) {
-            _config.maxSize = maxSize;
+            _config._maxSize = maxSize;
             return this;
         }
 
         @Override
         public Builder<T> setObjectFactory(Supplier<T> objectFactory) {
-            _config.objectFactory = objectFactory;
+            _config._objectFactory = objectFactory;
             return this;
         }
 
         @Override
         public Builder<T> setOnCreate(Consumer<Entry<T>> onCreate) {
-            _config.onCreate = onCreate;
+            _config._onCreate = onCreate;
             return this;
         }
 
         @Override
         public Builder<T> setOnClose(Consumer<Entry<T>> onClose) {
-            _config.onClose = onClose;
+            _config._onClose = onClose;
             return this;
         }
 
         @Override
         public DefaultObjectPoolConfig<T> build() {
-            if (_config.minSize < 0)
-                throw new IllegalStateException("minSize is invalid: " + _config.minSize);
+            if (_config._minSize < 0)
+                throw new IllegalStateException("minSize is invalid: " + _config._minSize);
 
-            if (_config.maxSize <= 0)
-                throw new IllegalStateException("maxSize is invalid: " + _config.maxSize);
+            if (_config._maxSize <= 0)
+                throw new IllegalStateException("maxSize is invalid: " + _config._maxSize);
 
-            if (_config.minSize > _config.maxSize)
+            if (_config._minSize > _config._maxSize)
                 throw new IllegalStateException(
-                        "minSize is larger than maxSiz. minSize: " + _config.minSize + ", maxSize: " + _config.maxSize);
+                        "minSize is larger than maxSiz. minSize: " + _config._minSize + ", maxSize: " + _config._maxSize);
 
-            if (_config.objectFactory == null)
+            if (_config._objectFactory == null)
                 throw new IllegalStateException("objectFactory is not set");
 
-            if (_config.onCreate == null)
+            if (_config._onCreate == null)
                 throw new IllegalStateException("onCreate is null");
 
-            if (_config.onClose == null)
+            if (_config._onClose == null)
                 throw new IllegalStateException("onClose is null");
 
             return _config.clone();
