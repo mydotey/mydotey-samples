@@ -15,10 +15,6 @@ import org.slf4j.LoggerFactory;
  */
 public class DefaultObjectPoolConfig<T> implements ObjectPoolConfig<T>, Cloneable {
 
-    public static <T> Builder<T> newBuilder() {
-        return new Builder<T>();
-    }
-
     private int _minSize;
     private int _maxSize;
     private Supplier<T> _objectFactory;
@@ -64,15 +60,20 @@ public class DefaultObjectPoolConfig<T> implements ObjectPoolConfig<T>, Cloneabl
         }
     }
 
-    public static class Builder<T> implements ObjectPoolConfig.Builder<T> {
+    public static class Builder<T> extends AbstractBuilder<T, ObjectPoolConfig.Builder<T>>
+            implements ObjectPoolConfig.Builder<T> {
+
+    }
+
+    @SuppressWarnings({ "unchecked", "rawtypes" })
+    protected static abstract class AbstractBuilder<T, B extends ObjectPoolConfig.AbstractBuilder<T, B>>
+            implements ObjectPoolConfig.AbstractBuilder<T, B> {
 
         private static Logger _logger = LoggerFactory.getLogger(ObjectPool.class);
 
-        @SuppressWarnings("rawtypes")
         protected static final Consumer<Entry> DEFAULT_ON_ENTRY_CREATE = e -> {
         };
 
-        @SuppressWarnings("rawtypes")
         protected static final Consumer<Entry> DEFAULT_ON_CLOSE = e -> {
             if (e.getObject() instanceof Closeable) {
                 try {
@@ -85,8 +86,7 @@ public class DefaultObjectPoolConfig<T> implements ObjectPoolConfig<T>, Cloneabl
 
         protected DefaultObjectPoolConfig<T> _config;
 
-        @SuppressWarnings({ "unchecked", "rawtypes" })
-        protected Builder() {
+        protected AbstractBuilder() {
             _config = newPoolConfig();
             _config._onCreate = (Consumer) DEFAULT_ON_ENTRY_CREATE;
             _config._onClose = (Consumer) DEFAULT_ON_CLOSE;
@@ -101,37 +101,37 @@ public class DefaultObjectPoolConfig<T> implements ObjectPoolConfig<T>, Cloneabl
         }
 
         @Override
-        public Builder<T> setMinSize(int minSize) {
+        public B setMinSize(int minSize) {
             _config._minSize = minSize;
-            return this;
+            return (B) this;
         }
 
         @Override
-        public Builder<T> setMaxSize(int maxSize) {
+        public B setMaxSize(int maxSize) {
             _config._maxSize = maxSize;
-            return this;
+            return (B) this;
         }
 
         @Override
-        public Builder<T> setObjectFactory(Supplier<T> objectFactory) {
+        public B setObjectFactory(Supplier<T> objectFactory) {
             _config._objectFactory = objectFactory;
-            return this;
+            return (B) this;
         }
 
         @Override
-        public Builder<T> setOnCreate(Consumer<Entry<T>> onCreate) {
+        public B setOnCreate(Consumer<Entry<T>> onCreate) {
             _config._onCreate = onCreate;
-            return this;
+            return (B) this;
         }
 
         @Override
-        public Builder<T> setOnClose(Consumer<Entry<T>> onClose) {
+        public B setOnClose(Consumer<Entry<T>> onClose) {
             _config._onClose = onClose;
-            return this;
+            return (B) this;
         }
 
         @Override
-        public DefaultObjectPoolConfig<T> build() {
+        public ObjectPoolConfig<T> build() {
             if (_config._minSize < 0)
                 throw new IllegalStateException("minSize is invalid: " + _config._minSize);
 
@@ -139,8 +139,8 @@ public class DefaultObjectPoolConfig<T> implements ObjectPoolConfig<T>, Cloneabl
                 throw new IllegalStateException("maxSize is invalid: " + _config._maxSize);
 
             if (_config._minSize > _config._maxSize)
-                throw new IllegalStateException(
-                        "minSize is larger than maxSiz. minSize: " + _config._minSize + ", maxSize: " + _config._maxSize);
+                throw new IllegalStateException("minSize is larger than maxSiz. minSize: " + _config._minSize
+                        + ", maxSize: " + _config._maxSize);
 
             if (_config._objectFactory == null)
                 throw new IllegalStateException("objectFactory is not set");

@@ -7,8 +7,7 @@ import java.util.concurrent.TimeUnit;
 
 import org.mydotey.samples.designpattern.objectpool.ObjectPool.Entry;
 import org.mydotey.samples.designpattern.objectpool.autoscale.AutoScaleObjectPoolConfig;
-import org.mydotey.samples.designpattern.objectpool.autoscale.DefaultAutoScaleObjectPool;
-import org.mydotey.samples.designpattern.objectpool.autoscale.DefaultAutoScaleObjectPoolConfig;
+import org.mydotey.samples.designpattern.objectpool.facade.ObjectPoolFacade;
 
 /**
  * @author koqizhao
@@ -24,7 +23,7 @@ public class ThreadPool implements Closeable {
     }
 
     protected ObjectPoolConfig<WorkerThread> newObjectPoolConfig() {
-        return DefaultAutoScaleObjectPoolConfig.<WorkerThread> newBuilder().setMinSize(5).setMaxSize(50)
+        return ObjectPoolFacade.<WorkerThread> newAutoScaleObjectPoolConfigBuilder().setMinSize(5).setMaxSize(50)
                 .setScaleFactor(5).setCheckInterval(TimeUnit.SECONDS.toMillis(5))
                 .setObjectFactory(() -> new WorkerThread(t -> getObjectPool().release(t.getPoolEntry())))
                 .setOnCreate(e -> {
@@ -37,8 +36,7 @@ public class ThreadPool implements Closeable {
     }
 
     protected ObjectPool<WorkerThread> newObjectPool() {
-        return new DefaultAutoScaleObjectPool<WorkerThread>(
-                (AutoScaleObjectPoolConfig<WorkerThread>) newObjectPoolConfig());
+        return ObjectPoolFacade.newAutoScaleObjectPool((AutoScaleObjectPoolConfig<WorkerThread>) newObjectPoolConfig());
     }
 
     protected ObjectPool<WorkerThread> getObjectPool() {

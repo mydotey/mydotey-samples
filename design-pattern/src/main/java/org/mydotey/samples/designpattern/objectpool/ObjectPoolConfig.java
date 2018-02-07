@@ -22,17 +22,21 @@ public interface ObjectPoolConfig<T> {
 
     Consumer<Entry<T>> getOnClose();
 
-    interface Builder<T> {
+    interface Builder<T> extends AbstractBuilder<T, Builder<T>> {
 
-        Builder<T> setMinSize(int minSize);
+    }
 
-        Builder<T> setMaxSize(int maxSize);
+    interface AbstractBuilder<T, B extends AbstractBuilder<T, B>> {
 
-        Builder<T> setObjectFactory(Supplier<T> objectFactory);
+        B setMinSize(int minSize);
 
-        Builder<T> setOnCreate(Consumer<Entry<T>> onCreate);
+        B setMaxSize(int maxSize);
 
-        Builder<T> setOnClose(Consumer<Entry<T>> onClose);
+        B setObjectFactory(Supplier<T> objectFactory);
+
+        B setOnCreate(Consumer<Entry<T>> onCreate);
+
+        B setOnClose(Consumer<Entry<T>> onClose);
 
         ObjectPoolConfig<T> build();
 

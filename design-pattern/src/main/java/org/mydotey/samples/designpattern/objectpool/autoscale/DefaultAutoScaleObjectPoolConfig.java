@@ -1,10 +1,7 @@
 package org.mydotey.samples.designpattern.objectpool.autoscale;
 
 import java.util.concurrent.TimeUnit;
-import java.util.function.Consumer;
-import java.util.function.Supplier;
 
-import org.mydotey.samples.designpattern.objectpool.ObjectPool;
 import org.mydotey.samples.designpattern.objectpool.DefaultObjectPoolConfig;
 
 /**
@@ -14,10 +11,6 @@ import org.mydotey.samples.designpattern.objectpool.DefaultObjectPoolConfig;
  */
 public class DefaultAutoScaleObjectPoolConfig<T> extends DefaultObjectPoolConfig<T>
         implements AutoScaleObjectPoolConfig<T> {
-
-    public static <T> Builder<T> newBuilder() {
-        return new Builder<T>();
-    }
 
     private long _objectTtl;
     private long _maxIdleTime;
@@ -54,11 +47,17 @@ public class DefaultAutoScaleObjectPoolConfig<T> extends DefaultObjectPoolConfig
         return _scaleFactor;
     }
 
-    public static class Builder<T> extends DefaultObjectPoolConfig.Builder<T>
+    public static class Builder<T> extends AbstractBuilder<T, AutoScaleObjectPoolConfig.Builder<T>>
             implements AutoScaleObjectPoolConfig.Builder<T> {
 
-        @SuppressWarnings("unchecked")
-        protected Builder() {
+    }
+
+    @SuppressWarnings("unchecked")
+    protected static abstract class AbstractBuilder<T, B extends AutoScaleObjectPoolConfig.AbstractBuilder<T, B>>
+            extends DefaultObjectPoolConfig.AbstractBuilder<T, B>
+            implements AutoScaleObjectPoolConfig.AbstractBuilder<T, B> {
+
+        protected AbstractBuilder() {
             getPoolConfig()._objectTtl = Long.MAX_VALUE;
             getPoolConfig()._maxIdleTime = Long.MAX_VALUE;
             getPoolConfig()._staleChecker = StaleChecker.DEFAULT;
@@ -77,62 +76,37 @@ public class DefaultAutoScaleObjectPoolConfig<T> extends DefaultObjectPoolConfig
         }
 
         @Override
-        public Builder<T> setMinSize(int minSize) {
-            return (Builder<T>) super.setMinSize(minSize);
-        }
-
-        @Override
-        public Builder<T> setMaxSize(int maxSize) {
-            return (Builder<T>) super.setMaxSize(maxSize);
-        }
-
-        @Override
-        public Builder<T> setObjectFactory(Supplier<T> objectFactory) {
-            return (Builder<T>) super.setObjectFactory(objectFactory);
-        }
-
-        @Override
-        public Builder<T> setOnCreate(Consumer<ObjectPool.Entry<T>> onEntryCreate) {
-            return (Builder<T>) super.setOnCreate(onEntryCreate);
-        }
-
-        @Override
-        public Builder<T> setOnClose(Consumer<ObjectPool.Entry<T>> onClose) {
-            return (Builder<T>) super.setOnClose(onClose);
-        }
-
-        @Override
-        public Builder<T> setObjectTtl(long objectTtl) {
+        public B setObjectTtl(long objectTtl) {
             getPoolConfig()._objectTtl = objectTtl;
-            return this;
+            return (B) this;
         }
 
         @Override
-        public Builder<T> setMaxIdleTime(long maxIdleTime) {
+        public B setMaxIdleTime(long maxIdleTime) {
             getPoolConfig()._maxIdleTime = maxIdleTime;
-            return this;
+            return (B) this;
         }
 
         @Override
-        public Builder<T> setStaleChecker(StaleChecker<T> staleChecker) {
+        public B setStaleChecker(StaleChecker<T> staleChecker) {
             getPoolConfig()._staleChecker = staleChecker;
-            return this;
+            return (B) this;
         }
 
         @Override
-        public Builder<T> setCheckInterval(long checkInterval) {
+        public B setCheckInterval(long checkInterval) {
             getPoolConfig()._checkInterval = checkInterval;
-            return this;
+            return (B) this;
         }
 
         @Override
-        public Builder<T> setScaleFactor(int scaleFactor) {
+        public B setScaleFactor(int scaleFactor) {
             getPoolConfig()._scaleFactor = scaleFactor;
-            return this;
+            return (B) this;
         }
 
         @Override
-        public DefaultAutoScaleObjectPoolConfig<T> build() {
+        public AutoScaleObjectPoolConfig<T> build() {
             if (getPoolConfig()._objectTtl <= 0)
                 throw new IllegalStateException("objectTtl is invalid: " + getPoolConfig()._objectTtl);
 
