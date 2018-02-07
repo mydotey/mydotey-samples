@@ -1,9 +1,7 @@
 package org.mydotey.samples.designpattern.objectpool.autoscale;
 
-import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
@@ -41,11 +39,6 @@ public class DefaultAutoScaleObjectPool<T> extends DefaultObjectPool<T> implemen
     }
 
     @Override
-    protected BlockingQueue<Integer> newBlockingQueue() {
-        return new LinkedBlockingQueue<>(_config.getMaxSize());
-    }
-
-    @Override
     protected DefaultEntry<T> tryAddNewEntryAndAcquireOne() {
         synchronized (_scaleLock) {
             DefaultEntry<T> entry = super.tryAddNewEntryAndAcquireOne();
@@ -62,7 +55,7 @@ public class DefaultAutoScaleObjectPool<T> extends DefaultObjectPool<T> implemen
         if (entry != null) {
             synchronized (entry.getNumber()) {
                 _entries.put(entry.getNumber(), entry);
-                _availableNumbers.add(entry.getNumber());
+                _availableNumbers.addFirst(entry.getNumber());
             }
         }
 

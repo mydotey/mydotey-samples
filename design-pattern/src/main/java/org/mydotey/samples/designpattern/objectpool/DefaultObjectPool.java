@@ -2,10 +2,10 @@ package org.mydotey.samples.designpattern.objectpool;
 
 import java.io.IOException;
 import java.util.Objects;
-import java.util.concurrent.ArrayBlockingQueue;
-import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.BlockingDeque;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentSkipListSet;
+import java.util.concurrent.LinkedBlockingDeque;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -25,7 +25,7 @@ public class DefaultObjectPool<T> implements ObjectPool<T> {
     protected ConcurrentSkipListSet<Integer> _numberPool;
     protected ConcurrentHashMap<Integer, Entry<T>> _entries;
 
-    protected BlockingQueue<Integer> _availableNumbers;
+    protected BlockingDeque<Integer> _availableNumbers;
 
     protected ObjectPoolConfig<T> _config;
 
@@ -44,13 +44,9 @@ public class DefaultObjectPool<T> implements ObjectPool<T> {
             _numberPool.add(new Integer(i));
 
         _entries = new ConcurrentHashMap<>(_config.getMaxSize());
-        _availableNumbers = newBlockingQueue();
+        _availableNumbers = new LinkedBlockingDeque<>(_config.getMaxSize());
 
         tryAddNewEntry(_config.getMinSize());
-    }
-
-    protected BlockingQueue<Integer> newBlockingQueue() {
-        return new ArrayBlockingQueue<>(_config.getMaxSize());
     }
 
     protected void tryAddNewEntry(int count) {
@@ -62,7 +58,7 @@ public class DefaultObjectPool<T> implements ObjectPool<T> {
         DefaultEntry<T> entry = tryCreateNewEntry();
         if (entry != null) {
             _entries.put(entry.getNumber(), entry);
-            _availableNumbers.add(entry.getNumber());
+            _availableNumbers.addFirst(entry.getNumber());
         }
 
         return entry;
@@ -143,13 +139,13 @@ public class DefaultObjectPool<T> implements ObjectPool<T> {
         if (entry != null)
             return entry;
 
-        Integer number = _availableNumbers.take();
+        Integer number = _availableNumbers.takeFirst();
         return acquire(number);
     }
 
     @Override
     public DefaultEntry<T> tryAcquire() {
-        Integer number = _availableNumbers.poll();
+        Integer number = _availableNumbers.pollFirst();
         if (number != null)
             return tryAcquire(number);
 
@@ -198,7 +194,7 @@ public class DefaultObjectPool<T> implements ObjectPool<T> {
 
     protected void releaseNumber(Integer number) {
         getEntry(number).setStatus(DefaultEntry.Status.AVAILABLE);
-        _availableNumbers.add(number);
+        _availableNumbers.addFirst(number);
     }
 
     @Override
