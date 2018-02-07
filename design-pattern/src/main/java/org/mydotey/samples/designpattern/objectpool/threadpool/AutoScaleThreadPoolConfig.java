@@ -15,6 +15,12 @@ public interface AutoScaleThreadPoolConfig extends ThreadPoolConfig {
 
     interface Builder extends ThreadPoolConfig.Builder {
 
+        @Override
+        Builder setMinSize(int minSize);
+
+        @Override
+        Builder setMaxSize(int maxSize);
+
         Builder setMaxIdleTime(long maxIdleTime);
 
         Builder setScaleFactor(int scaleFactor);

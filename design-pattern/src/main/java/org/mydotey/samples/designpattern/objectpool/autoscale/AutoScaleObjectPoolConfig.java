@@ -37,6 +37,8 @@ public interface AutoScaleObjectPoolConfig<T> extends ObjectPoolConfig<T> {
 
         B setScaleFactor(int scaleFactor);
 
+        @Override
+        AutoScaleObjectPoolConfig<T> build();
     }
 
 }
