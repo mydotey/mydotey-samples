@@ -204,7 +204,7 @@ public class DefaultAutoScaleObjectPool<T> extends DefaultObjectPool<T> implemen
         }
     }
 
-    public static class AutoScaleEntry<T> extends DefaultEntry<T> {
+    protected static class AutoScaleEntry<T> extends DefaultEntry<T> {
 
         protected interface Status extends DefaultEntry.Status {
             String PENDING_CLOSE = "pending_close";

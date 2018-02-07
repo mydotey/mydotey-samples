@@ -219,7 +219,7 @@ public class DefaultObjectPool<T> implements ObjectPool<T> {
         }
     }
 
-    public static class DefaultEntry<T> implements Entry<T>, Cloneable {
+    protected static class DefaultEntry<T> implements Entry<T>, Cloneable {
 
         protected interface Status {
             String AVAILABLE = "available";
