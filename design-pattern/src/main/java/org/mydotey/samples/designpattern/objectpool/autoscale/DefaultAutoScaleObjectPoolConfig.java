@@ -125,7 +125,7 @@ public class DefaultAutoScaleObjectPoolConfig<T> extends DefaultObjectPoolConfig
             if (getPoolConfig()._scaleFactor <= 0)
                 throw new IllegalStateException("invalid scaleFactor: " + getPoolConfig()._scaleFactor);
 
-            if (getPoolConfig()._scaleFactor > getPoolConfig().getMaxSize() - getPoolConfig().getMinSize())
+            if (getPoolConfig()._scaleFactor - 1 > getPoolConfig().getMaxSize() - getPoolConfig().getMinSize())
                 throw new IllegalStateException("too large scaleFactor: " + getPoolConfig()._scaleFactor);
 
             return (DefaultAutoScaleObjectPoolConfig<T>) super.build();
