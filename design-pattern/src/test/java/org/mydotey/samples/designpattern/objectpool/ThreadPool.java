@@ -23,13 +23,13 @@ public class ThreadPool implements Closeable {
     }
 
     protected ObjectPoolConfig<WorkerThread> newObjectPoolConfig() {
-        return ObjectPoolFacade.<WorkerThread> newAutoScaleObjectPoolConfigBuilder().setMinSize(5).setMaxSize(50)
+        return ObjectPoolFacade.<WorkerThread> newAutoScaleObjectPoolConfigBuilder().setMinSize(20).setMaxSize(100)
                 .setScaleFactor(5).setCheckInterval(TimeUnit.SECONDS.toMillis(5))
                 .setObjectFactory(() -> new WorkerThread(t -> getObjectPool().release(t.getPoolEntry())))
                 .setOnCreate(e -> {
                     e.getObject().setPoolEntry(e);
                     e.getObject().start();
-                }).setMaxIdleTime(TimeUnit.MINUTES.toMillis(1)).setObjectTtl(TimeUnit.MINUTES.toMillis(5))
+                }).setMaxIdleTime(TimeUnit.SECONDS.toMillis(5)).setObjectTtl(TimeUnit.MINUTES.toMillis(5))
                 .setOnClose(e -> e.getObject().interrupt())
                 .setStaleChecker(t -> t.getState() == Thread.State.TERMINATED).build();
 

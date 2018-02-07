@@ -50,16 +50,10 @@ public class DefaultAutoScaleObjectPool<T> extends DefaultObjectPool<T> implemen
     }
 
     @Override
-    protected AutoScaleEntry<T> tryAddNewEntry() {
-        AutoScaleEntry<T> entry = (AutoScaleEntry<T>) tryCreateNewEntry();
-        if (entry != null) {
-            synchronized (entry.getNumber()) {
-                _entries.put(entry.getNumber(), entry);
-                _availableNumbers.addFirst(entry.getNumber());
-            }
+    protected void addNewEntry(DefaultEntry<T> entry) {
+        synchronized (((AutoScaleEntry<T>) entry).getNumber()) {
+            super.addNewEntry(entry);
         }
-
-        return entry;
     }
 
     @Override
@@ -126,8 +120,10 @@ public class DefaultAutoScaleObjectPool<T> extends DefaultObjectPool<T> implemen
         synchronized (number) {
             AutoScaleEntry<T> entry = getEntry(number);
             if (entry.getStatus() == AutoScaleEntry.Status.PENDING_REFRESH) {
-                if (!tryRefresh(entry))
+                if (!tryRefresh(entry)) {
                     scaleIn(entry);
+                    return;
+                }
             } else
                 entry.renew();
 

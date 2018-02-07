@@ -56,12 +56,15 @@ public class DefaultObjectPool<T> implements ObjectPool<T> {
 
     protected DefaultEntry<T> tryAddNewEntry() {
         DefaultEntry<T> entry = tryCreateNewEntry();
-        if (entry != null) {
-            _entries.put(entry.getNumber(), entry);
-            _availableNumbers.addFirst(entry.getNumber());
-        }
+        if (entry != null)
+            addNewEntry(entry);
 
         return entry;
+    }
+
+    protected void addNewEntry(DefaultEntry<T> entry) {
+        _entries.put(entry.getNumber(), entry);
+        _availableNumbers.addFirst(entry.getNumber());
     }
 
     protected DefaultEntry<T> tryCreateNewEntry() {

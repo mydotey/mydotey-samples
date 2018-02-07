@@ -1,6 +1,7 @@
 package org.mydotey.samples.designpattern.objectpool;
 
 import java.util.Objects;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 
 import org.mydotey.samples.designpattern.objectpool.ObjectPool.Entry;
@@ -23,6 +24,8 @@ public class WorkerThread extends Thread {
 
     private Object _lock = new Object();
 
+    private AtomicBoolean _isStarted = new AtomicBoolean();
+
     protected WorkerThread(Consumer<WorkerThread> onTaskComplete) {
         Objects.requireNonNull(onTaskComplete, "onTaskComplete is null");
         _onTaskComplete = onTaskComplete;
@@ -33,6 +36,9 @@ public class WorkerThread extends Thread {
     public void run() {
         while (!isInterrupted()) {
             synchronized (_lock) {
+                if (!_isStarted.get())
+                    _isStarted.set(true);
+
                 try {
                     _lock.wait();
                 } catch (InterruptedException e) {
@@ -64,4 +70,18 @@ public class WorkerThread extends Thread {
     protected Entry<WorkerThread> getPoolEntry() {
         return _poolEntry;
     }
+
+    @Override
+    public synchronized void start() {
+        super.start();
+
+        while (!_isStarted.get()) {
+            try {
+                Thread.sleep(1);
+            } catch (InterruptedException e) {
+                break;
+            }
+        }
+    }
+
 }
