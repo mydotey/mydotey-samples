@@ -44,9 +44,13 @@ public class DefaultObjectPool<T> implements ObjectPool<T> {
             _numberPool.add(new Integer(i));
 
         _entries = new ConcurrentHashMap<>(_config.getMaxSize());
-        _availableNumbers = new ArrayBlockingQueue<>(_config.getMaxSize());
+        _availableNumbers = newBlockingQueue();
 
         tryAddNewEntry(_config.getMinSize());
+    }
+
+    protected BlockingQueue<Integer> newBlockingQueue() {
+        return new ArrayBlockingQueue<>(_config.getMaxSize());
     }
 
     protected void tryAddNewEntry(int count) {
@@ -239,7 +243,7 @@ public class DefaultObjectPool<T> implements ObjectPool<T> {
         private Integer _number;
         private volatile String _status;
 
-        private volatile T _obj;
+        private T _obj;
 
         protected DefaultEntry(Integer number, T obj) {
             _number = number;

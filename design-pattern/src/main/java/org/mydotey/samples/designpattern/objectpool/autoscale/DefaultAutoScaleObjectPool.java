@@ -1,7 +1,9 @@
 package org.mydotey.samples.designpattern.objectpool.autoscale;
 
+import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
@@ -36,6 +38,11 @@ public class DefaultAutoScaleObjectPool<T> extends DefaultObjectPool<T> implemen
                 getConfig().getCheckInterval(), getConfig().getCheckInterval(), TimeUnit.MILLISECONDS);
 
         _releaseExecutor = Executors.newSingleThreadExecutor();
+    }
+
+    @Override
+    protected BlockingQueue<Integer> newBlockingQueue() {
+        return new LinkedBlockingQueue<>(_config.getMaxSize());
     }
 
     @Override
@@ -165,9 +172,11 @@ public class DefaultAutoScaleObjectPool<T> extends DefaultObjectPool<T> implemen
     }
 
     protected void scaleIn(AutoScaleEntry<T> entry) {
-        _entries.remove(entry.getNumber());
-        _numberPool.add(entry.getNumber());
-        close(entry);
+        synchronized (_scaleLock) {
+            _entries.remove(entry.getNumber());
+            _numberPool.add(entry.getNumber());
+            close(entry);
+        }
     }
 
     protected boolean tryRefresh(Integer number) {
