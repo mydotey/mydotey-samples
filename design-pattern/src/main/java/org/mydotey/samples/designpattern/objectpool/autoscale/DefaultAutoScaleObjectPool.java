@@ -186,7 +186,7 @@ public class DefaultAutoScaleObjectPool<T> extends DefaultObjectPool<T> implemen
 
     protected boolean isStale(AutoScaleEntry<T> entry) {
         try {
-            return getConfig().getStaleChecker().isStale(entry.getObject());
+            return getConfig().getStaleChecker().apply(entry.getObject());
         } catch (Exception e) {
             _logger.error("staleChecker failed, ignore", e);
             return false;

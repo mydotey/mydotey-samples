@@ -1,5 +1,7 @@
 package org.mydotey.samples.designpattern.objectpool.autoscale;
 
+import java.util.function.Function;
+
 import org.mydotey.samples.designpattern.objectpool.ObjectPoolConfig;
 
 /**
@@ -13,7 +15,7 @@ public interface AutoScaleObjectPoolConfig<T> extends ObjectPoolConfig<T> {
 
     long getMaxIdleTime();
 
-    StaleChecker<T> getStaleChecker();
+    Function<T, Boolean> getStaleChecker();
 
     long getCheckInterval();
 
@@ -29,7 +31,7 @@ public interface AutoScaleObjectPoolConfig<T> extends ObjectPoolConfig<T> {
 
         B setMaxIdleTime(long maxIdleTime);
 
-        B setStaleChecker(StaleChecker<T> staleChecker);
+        B setStaleChecker(Function<T, Boolean> staleChecker);
 
         B setCheckInterval(long checkInterval);
 

@@ -1,6 +1,7 @@
 package org.mydotey.samples.designpattern.objectpool.autoscale;
 
 import java.util.concurrent.TimeUnit;
+import java.util.function.Function;
 
 import org.mydotey.samples.designpattern.objectpool.DefaultObjectPoolConfig;
 
@@ -14,7 +15,7 @@ public class DefaultAutoScaleObjectPoolConfig<T> extends DefaultObjectPoolConfig
 
     private long _objectTtl;
     private long _maxIdleTime;
-    private StaleChecker<T> _staleChecker;
+    private Function<T, Boolean> _staleChecker;
     private long _checkInterval;
     private int _scaleFactor;
 
@@ -33,7 +34,7 @@ public class DefaultAutoScaleObjectPoolConfig<T> extends DefaultObjectPoolConfig
     }
 
     @Override
-    public StaleChecker<T> getStaleChecker() {
+    public Function<T, Boolean> getStaleChecker() {
         return _staleChecker;
     }
 
@@ -52,15 +53,17 @@ public class DefaultAutoScaleObjectPoolConfig<T> extends DefaultObjectPoolConfig
 
     }
 
-    @SuppressWarnings("unchecked")
+    @SuppressWarnings({ "unchecked", "rawtypes" })
     protected static abstract class AbstractBuilder<T, B extends AutoScaleObjectPoolConfig.AbstractBuilder<T, B>>
             extends DefaultObjectPoolConfig.AbstractBuilder<T, B>
             implements AutoScaleObjectPoolConfig.AbstractBuilder<T, B> {
 
+        protected static final Function DEFAULT_STALE_CHECKER = o -> false;
+
         protected AbstractBuilder() {
             getPoolConfig()._objectTtl = Long.MAX_VALUE;
             getPoolConfig()._maxIdleTime = Long.MAX_VALUE;
-            getPoolConfig()._staleChecker = StaleChecker.DEFAULT;
+            getPoolConfig()._staleChecker = DEFAULT_STALE_CHECKER;
             getPoolConfig()._checkInterval = TimeUnit.SECONDS.toMillis(10);
             getPoolConfig()._scaleFactor = 1;
         }
@@ -88,7 +91,7 @@ public class DefaultAutoScaleObjectPoolConfig<T> extends DefaultObjectPoolConfig
         }
 
         @Override
-        public B setStaleChecker(StaleChecker<T> staleChecker) {
+        public B setStaleChecker(Function<T, Boolean> staleChecker) {
             getPoolConfig()._staleChecker = staleChecker;
             return (B) this;
         }
