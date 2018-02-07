@@ -62,7 +62,7 @@ public class DefaultAutoScaleObjectPoolConfig<T> extends DefaultObjectPoolConfig
             getPoolConfig()._objectTtl = Long.MAX_VALUE;
             getPoolConfig()._maxIdleTime = Long.MAX_VALUE;
             getPoolConfig()._staleChecker = StaleChecker.DEFAULT;
-            getPoolConfig()._checkInterval = TimeUnit.SECONDS.toMillis(1);
+            getPoolConfig()._checkInterval = TimeUnit.SECONDS.toMillis(10);
             getPoolConfig()._scaleFactor = 1;
         }
 
