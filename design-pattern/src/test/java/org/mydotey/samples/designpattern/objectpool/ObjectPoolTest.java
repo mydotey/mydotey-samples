@@ -25,7 +25,7 @@ public class ObjectPoolTest {
     @Test
     public void threadPoolSubmitTaskTest() throws IOException, InterruptedException {
         AtomicInteger counter = new AtomicInteger();
-        int count = 5;
+        int count = 100;
         CountDownLatch countDownLatch = new CountDownLatch(count);
         Runnable task = () -> {
             counter.incrementAndGet();
@@ -42,6 +42,7 @@ public class ObjectPoolTest {
             for (int i = 0; i < count; i++)
                 pool.submitTask(task);
 
+            System.out.println("pool size: " + pool.getSize());
             System.out.println("submit tasks eclipsed: " + (System.currentTimeMillis() - now));
             System.out.println("counter value: " + counter);
 

@@ -1,5 +1,6 @@
 package org.mydotey.samples.designpattern.objectpool.autoscale;
 
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -18,7 +19,8 @@ public class DefaultAutoScaleObjectPool<T> extends DefaultObjectPool<T> implemen
     private static Logger _logger = LoggerFactory.getLogger(DefaultAutoScaleObjectPool.class);
 
     protected Object _scaleLock;
-    protected ScheduledExecutorService _scheduledExecutorService;
+    protected ScheduledExecutorService _checkScheduler;
+    protected ExecutorService _releaseExecutor;
 
     public DefaultAutoScaleObjectPool(AutoScaleObjectPoolConfig<T> config) {
         super(config);
@@ -29,9 +31,11 @@ public class DefaultAutoScaleObjectPool<T> extends DefaultObjectPool<T> implemen
         super.init();
 
         _scaleLock = new Object();
-        _scheduledExecutorService = Executors.newSingleThreadScheduledExecutor(Executors.defaultThreadFactory());
-        _scheduledExecutorService.scheduleWithFixedDelay(() -> DefaultAutoScaleObjectPool.this.autoCheck(),
+        _checkScheduler = Executors.newSingleThreadScheduledExecutor();
+        _checkScheduler.scheduleWithFixedDelay(() -> DefaultAutoScaleObjectPool.this.autoCheck(),
                 getConfig().getCheckInterval(), getConfig().getCheckInterval(), TimeUnit.MILLISECONDS);
+
+        _releaseExecutor = Executors.newSingleThreadExecutor();
     }
 
     @Override
@@ -92,6 +96,10 @@ public class DefaultAutoScaleObjectPool<T> extends DefaultObjectPool<T> implemen
 
     @Override
     protected void releaseNumber(Integer number) {
+        _releaseExecutor.submit(() -> doReleaseNumber(number));
+    }
+
+    protected void doReleaseNumber(Integer number) {
         synchronized (number) {
             AutoScaleEntry<T> entry = getEntry(number);
             if (entry.getStatus() == AutoScaleEntry.Status.PENDING_CLOSE) {
@@ -198,7 +206,8 @@ public class DefaultAutoScaleObjectPool<T> extends DefaultObjectPool<T> implemen
         super.doClose();
 
         try {
-            _scheduledExecutorService.shutdown();
+            _checkScheduler.shutdown();
+            _releaseExecutor.shutdown();
         } catch (Exception e) {
             _logger.error("shutdown thread pool failed.", e);
         }
