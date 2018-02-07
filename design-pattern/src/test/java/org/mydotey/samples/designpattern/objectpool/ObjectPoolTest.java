@@ -2,6 +2,7 @@ package org.mydotey.samples.designpattern.objectpool;
 
 import java.io.IOException;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.junit.Assert;
 import org.junit.Test;
@@ -13,9 +14,6 @@ import org.junit.Test;
  */
 public class ObjectPoolTest {
 
-    private volatile int counter;
-    private CountDownLatch _countDownLatch;
-
     @Test
     public void threadPoolCreateTest() throws IOException {
         ThreadPool pool = new ThreadPool();
@@ -26,18 +24,19 @@ public class ObjectPoolTest {
 
     @Test
     public void threadPoolSubmitTaskTest() throws IOException, InterruptedException {
+        AtomicInteger counter = new AtomicInteger();
         int count = 5;
-        _countDownLatch = new CountDownLatch(count);
+        CountDownLatch countDownLatch = new CountDownLatch(count);
         Runnable task = () -> {
-            counter++;
-            _countDownLatch.countDown();
+            counter.incrementAndGet();
+            countDownLatch.countDown();
         };
         long now = System.currentTimeMillis();
         try (ThreadPool pool = new ThreadPool()) {
             System.out.println("new thread pool eclipsed: " + (System.currentTimeMillis() - now));
             System.out.println("pool size: " + pool.getSize());
             System.out.println("counter value: " + counter);
-            Assert.assertEquals(0, counter);
+            Assert.assertEquals(0, counter.get());
 
             now = System.currentTimeMillis();
             for (int i = 0; i < count; i++)
@@ -46,12 +45,12 @@ public class ObjectPoolTest {
             System.out.println("submit tasks eclipsed: " + (System.currentTimeMillis() - now));
             System.out.println("counter value: " + counter);
 
-            _countDownLatch.await();
+            countDownLatch.await();
 
             System.out.println("tasks run time: " + (System.currentTimeMillis() - now));
             System.out.println("counter value: " + counter);
             System.out.println("pool size: " + pool.getSize());
-            Assert.assertEquals(count, counter);
+            Assert.assertEquals(count, counter.get());
         }
     }
 
