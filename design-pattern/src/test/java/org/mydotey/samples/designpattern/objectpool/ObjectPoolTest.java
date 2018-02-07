@@ -9,6 +9,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import org.junit.Assert;
 import org.junit.Test;
+import org.mydotey.samples.designpattern.objectpool.threadpool.ThreadPool;
 
 /**
  * @author koqizhao
@@ -57,11 +58,6 @@ public class ObjectPoolTest {
             executorService.scheduleWithFixedDelay(() -> {
                 System.out.println("counter value: " + counter);
                 System.out.println("pool size: " + pool.getSize());
-                try {
-                    Thread.sleep(5);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
             }, 1000, 100, TimeUnit.MILLISECONDS);
             countDownLatch.await();
 
@@ -70,6 +66,8 @@ public class ObjectPoolTest {
             System.out.println("pool size: " + pool.getSize());
             Assert.assertEquals(count, counter.get());
         }
+
+        Thread.sleep(5 * 60 * 1000);
     }
 
 }

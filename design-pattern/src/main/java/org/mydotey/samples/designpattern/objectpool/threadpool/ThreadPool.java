@@ -1,10 +1,12 @@
-package org.mydotey.samples.designpattern.objectpool;
+package org.mydotey.samples.designpattern.objectpool.threadpool;
 
 import java.io.Closeable;
 import java.io.IOException;
 import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 
+import org.mydotey.samples.designpattern.objectpool.ObjectPool;
+import org.mydotey.samples.designpattern.objectpool.ObjectPoolConfig;
 import org.mydotey.samples.designpattern.objectpool.ObjectPool.Entry;
 import org.mydotey.samples.designpattern.objectpool.autoscale.AutoScaleObjectPoolConfig;
 import org.mydotey.samples.designpattern.objectpool.facade.ObjectPoolFacade;

@@ -6,6 +6,7 @@ import java.util.concurrent.BlockingDeque;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentSkipListSet;
 import java.util.concurrent.LinkedBlockingDeque;
+import java.util.concurrent.TimeUnit;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -138,16 +139,36 @@ public class DefaultObjectPool<T> implements ObjectPool<T> {
 
     @Override
     public DefaultEntry<T> acquire() throws InterruptedException {
+        checkClosed();
+
         DefaultEntry<T> entry = tryAcquire();
         if (entry != null)
             return entry;
 
-        Integer number = _availableNumbers.takeFirst();
+        Integer number = takeFirst();
         return acquire(number);
+    }
+
+    protected Integer takeFirst() throws InterruptedException {
+        while (true) {
+            checkClosed();
+
+            Integer number = _availableNumbers.pollFirst(1, TimeUnit.SECONDS);
+            if (null != null)
+                return number;
+        }
+    }
+
+    protected void checkClosed() {
+        if (isClosed())
+            throw new IllegalStateException("object pool has been closed");
     }
 
     @Override
     public DefaultEntry<T> tryAcquire() {
+        if (isClosed())
+            return null;
+
         Integer number = _availableNumbers.pollFirst();
         if (number != null)
             return tryAcquire(number);
@@ -181,6 +202,9 @@ public class DefaultObjectPool<T> implements ObjectPool<T> {
 
     @Override
     public void release(Entry<T> entry) {
+        if (isClosed())
+            return;
+
         DefaultEntry<T> defaultEntry = (DefaultEntry<T>) entry;
         if (defaultEntry == null || defaultEntry.getStatus() == DefaultEntry.Status.RELEASED)
             return;
@@ -218,6 +242,9 @@ public class DefaultObjectPool<T> implements ObjectPool<T> {
         for (Entry<T> entry : _entries.values()) {
             close((DefaultEntry<T>) entry);
         }
+
+        _numberPool.clear();
+        _availableNumbers.clear();
     }
 
     protected void close(DefaultEntry<T> entry) {

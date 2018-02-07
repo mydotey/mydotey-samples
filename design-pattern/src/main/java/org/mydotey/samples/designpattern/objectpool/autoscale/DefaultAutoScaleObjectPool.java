@@ -107,13 +107,17 @@ public class DefaultAutoScaleObjectPool<T> extends DefaultObjectPool<T> implemen
             }
         }
 
-        _releaseExecutor.submit(() -> doReleaseNumber(number));
+        releaseNumber(number);
         return null;
     }
 
     @Override
     protected void releaseNumber(Integer number) {
-        _releaseExecutor.submit(() -> doReleaseNumber(number));
+        try {
+            _releaseExecutor.submit(() -> doReleaseNumber(number));
+        } catch (Exception ex) {
+            doReleaseNumber(number);
+        }
     }
 
     protected void doReleaseNumber(Integer number) {

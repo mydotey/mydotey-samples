@@ -1,4 +1,4 @@
-package org.mydotey.samples.designpattern.objectpool;
+package org.mydotey.samples.designpattern.objectpool.threadpool;
 
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicBoolean;
