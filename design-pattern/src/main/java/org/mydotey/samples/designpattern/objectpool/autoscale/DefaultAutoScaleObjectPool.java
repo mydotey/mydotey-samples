@@ -18,6 +18,7 @@ public class DefaultAutoScaleObjectPool<T> extends DefaultObjectPool<T> implemen
 
     private static Logger _logger = LoggerFactory.getLogger(DefaultAutoScaleObjectPool.class);
 
+    protected Object _scaleLock;
     protected ScheduledExecutorService _scheduledExecutorService;
 
     public DefaultAutoScaleObjectPool(AutoScaleObjectPoolConfig<T> config) {
@@ -28,6 +29,7 @@ public class DefaultAutoScaleObjectPool<T> extends DefaultObjectPool<T> implemen
     protected void init() {
         super.init();
 
+        _scaleLock = new Object();
         _scheduledExecutorService = Executors.newSingleThreadScheduledExecutor(Executors.defaultThreadFactory());
         _scheduledExecutorService.scheduleWithFixedDelay(() -> DefaultAutoScaleObjectPool.this.autoCheck(),
                 getConfig().getCheckInterval(), getConfig().getCheckInterval(), TimeUnit.MILLISECONDS);
@@ -40,11 +42,13 @@ public class DefaultAutoScaleObjectPool<T> extends DefaultObjectPool<T> implemen
 
     @Override
     protected DefaultEntry<T> tryAddNewEntryAndAcquireOne() {
-        DefaultEntry<T> entry = super.tryAddNewEntryAndAcquireOne();
-        if (entry != null)
-            tryAddNewEntry(getConfig().getScaleFactor() - 1);
+        synchronized (_scaleLock) {
+            DefaultEntry<T> entry = super.tryAddNewEntryAndAcquireOne();
+            if (entry != null)
+                tryAddNewEntry(getConfig().getScaleFactor() - 1);
 
-        return entry;
+            return entry;
+        }
     }
 
     @Override
@@ -121,15 +125,17 @@ public class DefaultAutoScaleObjectPool<T> extends DefaultObjectPool<T> implemen
             return false;
 
         synchronized (number) {
-            entry = getEntry(number);
-            if (!needScaleIn(entry))
-                return false;
+            synchronized (_scaleLock) {
+                entry = getEntry(number);
+                if (!needScaleIn(entry))
+                    return false;
 
-            if (!_availableNumbers.remove(number))
-                return false;
+                if (!_availableNumbers.remove(number))
+                    return false;
 
-            scaleIn(entry);
-            return true;
+                scaleIn(entry);
+                return true;
+            }
         }
     }
 
@@ -192,7 +198,8 @@ public class DefaultAutoScaleObjectPool<T> extends DefaultObjectPool<T> implemen
 
     protected boolean needScaleIn(AutoScaleEntry<T> entry) {
         return entry.getStatus() == AutoScaleEntry.Status.AVAILABLE
-                && entry.getLastUsedTime() + getConfig().getMaxIdleTime() <= System.currentTimeMillis();
+                && entry.getLastUsedTime() + getConfig().getMaxIdleTime() <= System.currentTimeMillis()
+                && getSize() > getConfig().getMinSize();
     }
 
     protected boolean isStale(AutoScaleEntry<T> entry) {

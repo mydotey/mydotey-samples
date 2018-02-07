@@ -20,8 +20,6 @@ public class DefaultObjectPool<T> implements ObjectPool<T> {
 
     protected ObjectPoolConfig<T> _config;
 
-    protected Object _acquireLock;
-
     public DefaultObjectPool(ObjectPoolConfig<T> config) {
         Objects.requireNonNull(config, "config is null");
         _config = config;
@@ -37,17 +35,7 @@ public class DefaultObjectPool<T> implements ObjectPool<T> {
         _entries = new ConcurrentHashMap<>();
         _availableNumbers = new ArrayBlockingQueue<>(_config.getMaxSize());
 
-        _acquireLock = new Object();
-
         tryAddNewEntry(_config.getMinSize());
-    }
-
-    protected DefaultEntry<T> tryAddNewEntryAndAcquireOne() {
-        DefaultEntry<T> entry = tryCreateNewEntry();
-        if (entry != null)
-            _entries.put(entry.getNumber(), entry);
-
-        return entry;
     }
 
     protected void tryAddNewEntry(int count) {
@@ -126,33 +114,26 @@ public class DefaultObjectPool<T> implements ObjectPool<T> {
 
     @Override
     public DefaultEntry<T> tryAcquire() {
-        if (_numberPool.size() > 0) {
-            Integer number = _availableNumbers.poll();
-            if (number != null)
-                return acquire(number);
+        Integer number = _availableNumbers.poll();
+        if (number != null)
+            return acquire(number);
 
-            synchronized (_acquireLock) {
-                if (_numberPool.size() > 0) {
-                    number = _availableNumbers.poll();
-                    if (number != null)
-                        return acquire(number);
-
-                    DefaultEntry<T> entry = tryAddNewEntryAndAcquireOne();
-                    if (entry != null)
-                        return acquire(entry);
-                }
-            }
-        }
-
-        return null;
+        return tryAddNewEntryAndAcquireOne();
     }
 
     protected DefaultEntry<T> acquire(Integer number) {
-        return acquire(getEntry(number));
+        DefaultEntry<T> entry = getEntry(number);
+        entry.setStatus(DefaultEntry.Status.ACQUIRED);
+        return entry.clone();
     }
 
-    protected DefaultEntry<T> acquire(DefaultEntry<T> entry) {
+    protected DefaultEntry<T> tryAddNewEntryAndAcquireOne() {
+        DefaultEntry<T> entry = tryCreateNewEntry();
+        if (entry == null)
+            return null;
+
         entry.setStatus(DefaultEntry.Status.ACQUIRED);
+        _entries.put(entry.getNumber(), entry);
         return entry.clone();
     }
 
