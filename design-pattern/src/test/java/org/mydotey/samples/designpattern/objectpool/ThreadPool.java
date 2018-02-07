@@ -1,5 +1,8 @@
 package org.mydotey.samples.designpattern.objectpool;
 
+import java.io.Closeable;
+import java.io.IOException;
+import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 
 import org.mydotey.samples.designpattern.objectpool.ObjectPool.Entry;
@@ -12,11 +15,11 @@ import org.mydotey.samples.designpattern.objectpool.autoscale.DefaultAutoScaleOb
  *
  * Feb 6, 2018
  */
-public class WorkerThreadPool {
+public class ThreadPool implements Closeable {
 
     private ObjectPool<WorkerThread> _threadPool;
 
-    public WorkerThreadPool() {
+    public ThreadPool() {
         _threadPool = newObjectPool();
     }
 
@@ -30,6 +33,7 @@ public class WorkerThreadPool {
                 }).setMaxIdleTime(TimeUnit.MINUTES.toMillis(1)).setObjectTtl(TimeUnit.MINUTES.toMillis(5))
                 .setOnClose(e -> e.getObject().interrupt())
                 .setStaleChecker(t -> t.getState() == Thread.State.TERMINATED).build();
+
     }
 
     protected ObjectPool<WorkerThread> newObjectPool() {
@@ -41,13 +45,30 @@ public class WorkerThreadPool {
         return _threadPool;
     }
 
-    public void runAsync(Runnable task) {
-        try {
-            Entry<WorkerThread> entry = getObjectPool().acquire();
-            entry.getObject().runAsync(task);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
+    public int getSize() {
+        return getObjectPool().getSize();
     }
 
+    public void submitTask(Runnable task) throws InterruptedException {
+        Objects.requireNonNull(task, "task is null");
+
+        Entry<WorkerThread> entry = getObjectPool().acquire();
+        entry.getObject().setTask(task);
+    }
+
+    public boolean trySubmitTask(Runnable task) {
+        Objects.requireNonNull(task, "task is null");
+
+        Entry<WorkerThread> entry = getObjectPool().tryAcquire();
+        if (entry == null)
+            return false;
+
+        entry.getObject().setTask(task);
+        return true;
+    }
+
+    @Override
+    public void close() throws IOException {
+        getObjectPool().close();
+    }
 }

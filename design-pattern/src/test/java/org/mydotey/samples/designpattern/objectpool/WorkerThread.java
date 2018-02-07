@@ -31,25 +31,30 @@ public class WorkerThread extends Thread {
 
     @Override
     public void run() {
-        while (!interrupted()) {
-            try {
-                _lock.wait();
+        while (!interrupted() && getState() != Thread.State.TERMINATED) {
+            synchronized (_lock) {
+                try {
+                    _lock.wait();
+                } catch (InterruptedException e) {
+                    break;
+                }
+
                 try {
                     _task.run();
+                } catch (Exception e) {
+                    _logger.error("task threw exception: " + this.getId(), e);
                 } finally {
                     _onTaskComplete.accept(this);
                 }
-            } catch (Exception e) {
-                _logger.error("task threw exception: " + this.getId(), e);
-                break;
             }
         }
     }
 
-    protected void runAsync(Runnable task) {
-        Objects.requireNonNull(task, "task is null");
-        _task = task;
-        _lock.notify();
+    protected void setTask(Runnable task) {
+        synchronized (_lock) {
+            _task = task;
+            _lock.notify();
+        }
     }
 
     protected void setPoolEntry(Entry<WorkerThread> poolEntry) {
