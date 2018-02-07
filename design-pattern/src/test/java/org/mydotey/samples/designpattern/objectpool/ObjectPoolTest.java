@@ -10,6 +10,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 import org.junit.Assert;
 import org.junit.Test;
 import org.mydotey.samples.designpattern.objectpool.threadpool.ThreadPool;
+import org.mydotey.samples.designpattern.objectpool.threadpool.ThreadPoolConfig;
+import org.mydotey.samples.designpattern.objectpool.threadpool.ThreadPools;
 
 /**
  * @author koqizhao
@@ -17,12 +19,21 @@ import org.mydotey.samples.designpattern.objectpool.threadpool.ThreadPool;
  * Feb 6, 2018
  */
 public class ObjectPoolTest {
+    
+    protected int _minSize = 10;
+    protected int _maxSize = 100;
+
+    protected ThreadPool newThreadPool() {
+        ThreadPoolConfig.Builder builder = ThreadPools.newThreadPoolConfigBuilder();
+        builder.setMinSize(_minSize).setMaxSize(_maxSize);
+        return ThreadPools.newThreadPool(builder);
+    }
 
     @Test
     public void threadPoolCreateTest() throws IOException {
-        ThreadPool pool = new ThreadPool();
+        ThreadPool pool = newThreadPool();
         System.out.println(pool.getSize());
-        Assert.assertEquals(20, pool.getSize());
+        Assert.assertEquals(_minSize, pool.getSize());
         pool.close();
     }
 
@@ -40,7 +51,7 @@ public class ObjectPoolTest {
             }
         };
         long now = System.currentTimeMillis();
-        try (ThreadPool pool = new ThreadPool()) {
+        try (ThreadPool pool = newThreadPool()) {
             System.out.println("new thread pool eclipsed: " + (System.currentTimeMillis() - now));
             System.out.println("pool size: " + pool.getSize());
             System.out.println("counter value: " + counter);
@@ -66,8 +77,6 @@ public class ObjectPoolTest {
             System.out.println("pool size: " + pool.getSize());
             Assert.assertEquals(count, counter.get());
         }
-
-        Thread.sleep(5 * 60 * 1000);
     }
 
 }

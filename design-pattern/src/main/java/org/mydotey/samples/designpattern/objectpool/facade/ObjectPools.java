@@ -14,7 +14,7 @@ import org.mydotey.samples.designpattern.objectpool.autoscale.DefaultAutoScaleOb
  *
  * Feb 7, 2018
  */
-public class ObjectPoolFacade {
+public class ObjectPools {
 
     public static <T> ObjectPoolConfig.Builder<T> newObjectPoolConfigBuilder() {
         return new DefaultObjectPoolConfig.Builder<T>();

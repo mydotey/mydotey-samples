@@ -45,11 +45,15 @@ public class WorkerThread extends Thread {
                     break;
                 }
 
+                if (_task == null)
+                    continue;
+
                 try {
                     _task.run();
                 } catch (Exception e) {
                     _logger.error("task threw exception: " + this.getId(), e);
                 } finally {
+                    _task = null;
                     _onTaskComplete.accept(this);
                 }
             }
