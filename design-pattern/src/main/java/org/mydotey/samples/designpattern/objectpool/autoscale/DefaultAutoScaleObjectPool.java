@@ -1,6 +1,5 @@
 package org.mydotey.samples.designpattern.objectpool.autoscale;
 
-import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -19,8 +18,7 @@ public class DefaultAutoScaleObjectPool<T> extends DefaultObjectPool<T> implemen
     private static Logger _logger = LoggerFactory.getLogger(DefaultAutoScaleObjectPool.class);
 
     protected Object _scaleLock;
-    protected ScheduledExecutorService _checkScheduler;
-    protected ExecutorService _releaseExecutor;
+    protected ScheduledExecutorService _taskScheduler;
 
     public DefaultAutoScaleObjectPool(AutoScaleObjectPoolConfig<T> config) {
         super(config);
@@ -31,11 +29,9 @@ public class DefaultAutoScaleObjectPool<T> extends DefaultObjectPool<T> implemen
         super.init();
 
         _scaleLock = new Object();
-        _checkScheduler = Executors.newSingleThreadScheduledExecutor();
-        _checkScheduler.scheduleWithFixedDelay(() -> DefaultAutoScaleObjectPool.this.autoCheck(),
+        _taskScheduler = Executors.newSingleThreadScheduledExecutor();
+        _taskScheduler.scheduleWithFixedDelay(() -> DefaultAutoScaleObjectPool.this.autoCheck(),
                 getConfig().getCheckInterval(), getConfig().getCheckInterval(), TimeUnit.MILLISECONDS);
-
-        _releaseExecutor = Executors.newSingleThreadExecutor();
     }
 
     @Override
@@ -114,7 +110,7 @@ public class DefaultAutoScaleObjectPool<T> extends DefaultObjectPool<T> implemen
     @Override
     protected void releaseNumber(Integer number) {
         try {
-            _releaseExecutor.submit(() -> doReleaseNumber(number));
+            _taskScheduler.submit(() -> doReleaseNumber(number));
         } catch (Exception ex) {
             doReleaseNumber(number);
         }
@@ -233,8 +229,7 @@ public class DefaultAutoScaleObjectPool<T> extends DefaultObjectPool<T> implemen
         super.doClose();
 
         try {
-            _checkScheduler.shutdown();
-            _releaseExecutor.shutdown();
+            _taskScheduler.shutdown();
         } catch (Exception e) {
             _logger.error("shutdown thread pool failed.", e);
         }

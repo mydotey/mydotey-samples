@@ -22,7 +22,7 @@ public class ObjectPoolTest {
     public void threadPoolCreateTest() throws IOException {
         ThreadPool pool = new ThreadPool();
         System.out.println(pool.getSize());
-        Assert.assertEquals(5, pool.getSize());
+        Assert.assertEquals(20, pool.getSize());
         pool.close();
     }
 
