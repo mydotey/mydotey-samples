@@ -18,9 +18,9 @@ public interface ObjectPoolConfig<T> {
 
     Supplier<T> getObjectFactory();
 
-    Consumer<T> getOnClose();
+    Consumer<Entry<T>> getOnCreate();
 
-    Consumer<Entry<T>> getOnEntryCreate();
+    Consumer<Entry<T>> getOnClose();
 
     interface Builder<T> {
 
@@ -30,9 +30,9 @@ public interface ObjectPoolConfig<T> {
 
         Builder<T> setObjectFactory(Supplier<T> objectFactory);
 
-        Builder<T> setOnEntryCreate(Consumer<Entry<T>> onEntryCreate);
+        Builder<T> setOnCreate(Consumer<Entry<T>> onCreate);
 
-        Builder<T> setOnClose(Consumer<T> onClose);
+        Builder<T> setOnClose(Consumer<Entry<T>> onClose);
 
         ObjectPoolConfig<T> build();
 

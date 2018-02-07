@@ -92,12 +92,12 @@ public class DefaultAutoScaleObjectPoolConfig<T> extends DefaultObjectPoolConfig
         }
 
         @Override
-        public Builder<T> setOnEntryCreate(Consumer<ObjectPool.Entry<T>> onEntryCreate) {
-            return (Builder<T>) super.setOnEntryCreate(onEntryCreate);
+        public Builder<T> setOnCreate(Consumer<ObjectPool.Entry<T>> onEntryCreate) {
+            return (Builder<T>) super.setOnCreate(onEntryCreate);
         }
 
         @Override
-        public Builder<T> setOnClose(Consumer<T> onClose) {
+        public Builder<T> setOnClose(Consumer<ObjectPool.Entry<T>> onClose) {
             return (Builder<T>) super.setOnClose(onClose);
         }
 

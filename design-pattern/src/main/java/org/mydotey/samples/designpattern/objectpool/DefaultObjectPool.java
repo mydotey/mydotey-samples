@@ -93,7 +93,7 @@ public class DefaultObjectPool<T> implements ObjectPool<T> {
     protected DefaultEntry<T> newPoolEntry(Integer number) {
         DefaultEntry<T> entry = newConcretePoolEntry(number);
         try {
-            _config.getOnEntryCreate().accept(entry);
+            _config.getOnCreate().accept(entry);
         } catch (Exception e) {
             _logger.error("onEntryCreate failed", e);
             throw e;
@@ -213,7 +213,7 @@ public class DefaultObjectPool<T> implements ObjectPool<T> {
         entry.setStatus(DefaultEntry.Status.CLOSED);
 
         try {
-            _config.getOnClose().accept(entry.getObject());
+            _config.getOnClose().accept(entry);
         } catch (Exception e) {
             _logger.error("close object failed", e);
         }

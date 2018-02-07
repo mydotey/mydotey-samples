@@ -22,12 +22,13 @@ public class WorkerThreadPool {
 
     protected ObjectPoolConfig<WorkerThread> newObjectPoolConfig() {
         return DefaultAutoScaleObjectPoolConfig.<WorkerThread> newBuilder().setMinSize(5).setMaxSize(50)
+                .setScaleFactor(5).setCheckInterval(TimeUnit.SECONDS.toMillis(5))
                 .setObjectFactory(() -> new WorkerThread(t -> getObjectPool().release(t.getPoolEntry())))
-                .setOnEntryCreate(e -> {
+                .setOnCreate(e -> {
                     e.getObject().setPoolEntry(e);
                     e.getObject().start();
                 }).setMaxIdleTime(TimeUnit.MINUTES.toMillis(1)).setObjectTtl(TimeUnit.MINUTES.toMillis(5))
-                .setScaleFactor(5).setCheckInterval(TimeUnit.SECONDS.toMillis(5))
+                .setOnClose(e -> e.getObject().interrupt())
                 .setStaleChecker(t -> t.getState() == Thread.State.TERMINATED).build();
     }
 

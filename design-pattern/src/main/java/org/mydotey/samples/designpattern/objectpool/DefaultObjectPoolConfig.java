@@ -22,8 +22,8 @@ public class DefaultObjectPoolConfig<T> implements ObjectPoolConfig<T>, Cloneabl
     private int minSize;
     private int maxSize;
     private Supplier<T> objectFactory;
-    private Consumer<Entry<T>> onEntryCreate;
-    private Consumer<T> onClose;
+    private Consumer<Entry<T>> onCreate;
+    private Consumer<Entry<T>> onClose;
 
     protected DefaultObjectPoolConfig() {
 
@@ -45,12 +45,12 @@ public class DefaultObjectPoolConfig<T> implements ObjectPoolConfig<T>, Cloneabl
     }
 
     @Override
-    public Consumer<Entry<T>> getOnEntryCreate() {
-        return onEntryCreate;
+    public Consumer<Entry<T>> getOnCreate() {
+        return onCreate;
     }
 
     @Override
-    public Consumer<T> getOnClose() {
+    public Consumer<Entry<T>> getOnClose() {
         return onClose;
     }
 
@@ -69,27 +69,27 @@ public class DefaultObjectPoolConfig<T> implements ObjectPoolConfig<T>, Cloneabl
         private static Logger _logger = LoggerFactory.getLogger(ObjectPool.class);
 
         @SuppressWarnings("rawtypes")
-        protected static final Consumer DEFAULT_ON_ENTRY_CREATE = e -> {
+        protected static final Consumer<Entry> DEFAULT_ON_ENTRY_CREATE = e -> {
         };
 
         @SuppressWarnings("rawtypes")
-        protected static final Consumer DEFAULT_ON_CLOSE = o -> {
-            if (o instanceof Closeable) {
+        protected static final Consumer<Entry> DEFAULT_ON_CLOSE = e -> {
+            if (e.getObject() instanceof Closeable) {
                 try {
-                    ((Closeable) o).close();
-                } catch (Exception e) {
-                    _logger.error("close object failed", e);
+                    ((Closeable) e.getObject()).close();
+                } catch (Exception ex) {
+                    _logger.error("close object failed", ex);
                 }
             }
         };
 
         protected DefaultObjectPoolConfig<T> _config;
 
-        @SuppressWarnings("unchecked")
+        @SuppressWarnings({ "unchecked", "rawtypes" })
         protected Builder() {
             _config = newPoolConfig();
-            _config.onEntryCreate = DEFAULT_ON_ENTRY_CREATE;
-            _config.onClose = DEFAULT_ON_CLOSE;
+            _config.onCreate = (Consumer) DEFAULT_ON_ENTRY_CREATE;
+            _config.onClose = (Consumer) DEFAULT_ON_CLOSE;
         }
 
         protected DefaultObjectPoolConfig<T> newPoolConfig() {
@@ -119,13 +119,13 @@ public class DefaultObjectPoolConfig<T> implements ObjectPoolConfig<T>, Cloneabl
         }
 
         @Override
-        public Builder<T> setOnEntryCreate(Consumer<Entry<T>> onEntryCreate) {
-            _config.onEntryCreate = onEntryCreate;
+        public Builder<T> setOnCreate(Consumer<Entry<T>> onCreate) {
+            _config.onCreate = onCreate;
             return this;
         }
 
         @Override
-        public Builder<T> setOnClose(Consumer<T> onClose) {
+        public Builder<T> setOnClose(Consumer<Entry<T>> onClose) {
             _config.onClose = onClose;
             return this;
         }
@@ -145,8 +145,8 @@ public class DefaultObjectPoolConfig<T> implements ObjectPoolConfig<T>, Cloneabl
             if (_config.objectFactory == null)
                 throw new IllegalStateException("objectFactory is not set");
 
-            if (_config.onEntryCreate == null)
-                throw new IllegalStateException("onEntryCreate is null");
+            if (_config.onCreate == null)
+                throw new IllegalStateException("onCreate is null");
 
             if (_config.onClose == null)
                 throw new IllegalStateException("onClose is null");

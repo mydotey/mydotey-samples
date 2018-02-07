@@ -35,10 +35,10 @@ public interface AutoScaleObjectPoolConfig<T> extends ObjectPoolConfig<T> {
         Builder<T> setObjectFactory(Supplier<T> objectFactory);
 
         @Override
-        Builder<T> setOnEntryCreate(Consumer<ObjectPool.Entry<T>> onEntryCreate);
+        Builder<T> setOnCreate(Consumer<ObjectPool.Entry<T>> onCreate);
 
         @Override
-        Builder<T> setOnClose(Consumer<T> onClose);
+        Builder<T> setOnClose(Consumer<ObjectPool.Entry<T>> onClose);
 
         @Override
         AutoScaleObjectPoolConfig<T> build();
