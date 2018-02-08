@@ -46,7 +46,7 @@ public class DefaultThreadPool implements Closeable, ThreadPool {
     }
 
     @Override
-    public void submitTask(Runnable task) throws InterruptedException {
+    public void submit(Runnable task) throws InterruptedException {
         Objects.requireNonNull(task, "task is null");
 
         Entry<WorkerThread> entry = getObjectPool().acquire();
@@ -54,7 +54,7 @@ public class DefaultThreadPool implements Closeable, ThreadPool {
     }
 
     @Override
-    public boolean trySubmitTask(Runnable task) {
+    public boolean trySubmit(Runnable task) {
         Objects.requireNonNull(task, "task is null");
 
         Entry<WorkerThread> entry = getObjectPool().tryAcquire();

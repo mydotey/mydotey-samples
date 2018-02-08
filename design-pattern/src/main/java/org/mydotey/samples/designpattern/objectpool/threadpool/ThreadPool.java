@@ -11,8 +11,8 @@ public interface ThreadPool extends Closeable {
 
     int getSize();
 
-    void submitTask(Runnable task) throws InterruptedException;
+    void submit(Runnable task) throws InterruptedException;
 
-    boolean trySubmitTask(Runnable task);
+    boolean trySubmit(Runnable task);
 
 }

@@ -2,6 +2,7 @@ package org.mydotey.samples.designpattern.objectpool.threadpool;
 
 import java.io.IOException;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -23,6 +24,7 @@ public class ObjectPoolTest {
 
     protected int _minSize = 10;
     protected int _maxSize = 100;
+    protected int _submitterThreadCount = 10;
 
     protected int _defaultTaskCount = _minSize;
     protected long _defaultTaskSleep = 0;
@@ -114,6 +116,30 @@ public class ObjectPoolTest {
         threadPoolSubmitTaskTest(taskCount, taskSleep, viInitDelay, sizeAfterSubmit, finishSleep, finalSize);
     }
 
+    @Test
+    public void threadPoolSubmitTaskConcurrentTest() throws IOException, InterruptedException {
+        int taskCount = 200;
+        long taskSleep = 2000;
+        long viInitDelay = _defaultViInitDelay;
+        int sizeAfterSubmit = _defaultSizeAfterSumit;
+        long finishSleep = 5000;
+        int finalSize = _maxSize;
+        threadPoolSubmitTaskTest(taskCount, taskSleep, viInitDelay, sizeAfterSubmit, finishSleep, finalSize,
+                newThreadPool(), SubmissionMode.Concurrent);
+    }
+
+    @Test
+    public void threadPoolSubmitTaskConcurrentTest2() throws IOException, InterruptedException {
+        int taskCount = 200;
+        long taskSleep = 2000;
+        long viInitDelay = _defaultViInitDelay;
+        int sizeAfterSubmit = _defaultSizeAfterSumit;
+        long finishSleep = 5000;
+        int finalSize = _maxSize;
+        threadPoolSubmitTaskTest(taskCount, taskSleep, viInitDelay, sizeAfterSubmit, finishSleep, finalSize,
+                newThreadPool(), SubmissionMode.SelfSelf);
+    }
+
     protected void threadPoolSubmitTaskTest(int taskCount, long taskSleep, long viInitDelay, int sizeAfterSubmit,
             long finishSleep, int finalSize) throws IOException, InterruptedException {
         threadPoolSubmitTaskTest(taskCount, taskSleep, viInitDelay, sizeAfterSubmit, finishSleep, finalSize,
@@ -122,6 +148,13 @@ public class ObjectPoolTest {
 
     protected void threadPoolSubmitTaskTest(int taskCount, long taskSleep, long viInitDelay, int sizeAfterSubmit,
             long finishSleep, int finalSize, ThreadPool customPool) throws IOException, InterruptedException {
+        threadPoolSubmitTaskTest(taskCount, taskSleep, viInitDelay, sizeAfterSubmit, finishSleep, finalSize, customPool,
+                SubmissionMode.SingleThread);
+    }
+
+    protected void threadPoolSubmitTaskTest(int taskCount, long taskSleep, long viInitDelay, int sizeAfterSubmit,
+            long finishSleep, int finalSize, ThreadPool customPool, SubmissionMode submissionMode)
+            throws IOException, InterruptedException {
         System.out.println();
         System.out.println();
 
@@ -139,22 +172,53 @@ public class ObjectPoolTest {
             }
         };
         long now = System.currentTimeMillis();
-        ScheduledExecutorService executorService = null;
+        ExecutorService taskSubmitter = null;
+        ScheduledExecutorService viTimer = null;
+        ThreadPool self = null;
         try (ThreadPool pool = customPool) {
             System.out.println("new thread pool eclipsed: " + (System.currentTimeMillis() - now));
             System.out.println("counter value: " + counter);
             vi(pool);
             Assert.assertEquals(0, counter.get());
 
-            executorService = Executors.newSingleThreadScheduledExecutor();
-            executorService.scheduleWithFixedDelay(() -> {
+            viTimer = Executors.newSingleThreadScheduledExecutor();
+            viTimer.scheduleWithFixedDelay(() -> {
                 System.out.println("counter value: " + counter);
                 vi(pool);
             }, 1000, 500, TimeUnit.MILLISECONDS);
 
-            now = System.currentTimeMillis();
-            for (int i = 0; i < taskCount; i++)
-                pool.submitTask(task);
+            switch (submissionMode) {
+                case SingleThread:
+                    for (int i = 0; i < taskCount; i++)
+                        pool.submit(task);
+                    break;
+                case Concurrent:
+                    taskSubmitter = Executors.newFixedThreadPool(_submitterThreadCount);
+                    now = System.currentTimeMillis();
+                    for (int i = 0; i < taskCount; i++)
+                        taskSubmitter.submit(() -> {
+                            try {
+                                pool.submit(task);
+                            } catch (InterruptedException e) {
+                                e.printStackTrace();
+                            }
+                        });
+                    break;
+                case SelfSelf:
+                    self = newThreadPool();
+                    for (int i = 0; i < taskCount; i++)
+                        self.submit(() -> {
+                            try {
+                                pool.submit(task);
+                            } catch (InterruptedException e) {
+                                e.printStackTrace();
+                            }
+                        });
+                    break;
+                default:
+                    Assert.fail("impossible submissionMode: " + submissionMode);
+                    break;
+            }
 
             System.out.println("submit tasks eclipsed: " + (System.currentTimeMillis() - now));
             System.out.println("counter value: " + counter);
@@ -189,8 +253,14 @@ public class ObjectPoolTest {
             if (finalSize >= 0)
                 Assert.assertEquals(finalSize, pool.getSize());
         } finally {
-            if (executorService != null)
-                executorService.shutdown();
+            if (taskSubmitter != null)
+                taskSubmitter.shutdown();
+
+            if (self != null)
+                self.close();
+
+            if (viTimer != null)
+                viTimer.shutdown();
         }
     }
 
@@ -203,4 +273,7 @@ public class ObjectPoolTest {
         System.out.println();
     }
 
+    protected enum SubmissionMode {
+        SingleThread, Concurrent, SelfSelf
+    }
 }

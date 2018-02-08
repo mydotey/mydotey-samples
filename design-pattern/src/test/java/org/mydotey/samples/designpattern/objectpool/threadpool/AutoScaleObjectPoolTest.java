@@ -53,7 +53,7 @@ public class AutoScaleObjectPoolTest extends ObjectPoolTest {
     }
 
     @Test
-    public void threadPoolSubmitTaskTest7() throws IOException, InterruptedException {
+    public void threadPoolSubmitTaskMoreTest() throws IOException, InterruptedException {
         int taskCount = 200;
         long taskSleep = 2000;
         long viInitDelay = _defaultViInitDelay;
@@ -68,7 +68,7 @@ public class AutoScaleObjectPoolTest extends ObjectPoolTest {
     }
 
     @Test
-    public void threadPoolSubmitTaskTest8() throws IOException, InterruptedException {
+    public void threadPoolSubmitTaskMoreTest2() throws IOException, InterruptedException {
         int taskCount = 200;
         long taskSleep = 2000;
         long viInitDelay = _defaultViInitDelay;
@@ -83,7 +83,7 @@ public class AutoScaleObjectPoolTest extends ObjectPoolTest {
     }
 
     @Test
-    public void threadPoolSubmitTaskTest9() throws IOException, InterruptedException {
+    public void threadPoolSubmitTaskMoreTest3() throws IOException, InterruptedException {
         int taskCount = 200;
         long taskSleep = 2000;
         long viInitDelay = _defaultViInitDelay;
@@ -95,6 +95,30 @@ public class AutoScaleObjectPoolTest extends ObjectPoolTest {
         long ttl = Long.MAX_VALUE;
         ThreadPool pool = newThreadPool(checkInterval, maxIdleTime, ttl);
         threadPoolSubmitTaskTest(taskCount, taskSleep, viInitDelay, sizeAfterSubmit, finishSleep, finalSize, pool);
+    }
+
+    @Override
+    public void threadPoolSubmitTaskConcurrentTest() throws IOException, InterruptedException {
+        int taskCount = 200;
+        long taskSleep = 2000;
+        long viInitDelay = _defaultViInitDelay;
+        int sizeAfterSubmit = _defaultSizeAfterSumit;
+        long finishSleep = 10000;
+        int finalSize = _minSize;
+        threadPoolSubmitTaskTest(taskCount, taskSleep, viInitDelay, sizeAfterSubmit, finishSleep, finalSize,
+                newThreadPool(), SubmissionMode.Concurrent);
+    }
+
+    @Override
+    public void threadPoolSubmitTaskConcurrentTest2() throws IOException, InterruptedException {
+        int taskCount = 200;
+        long taskSleep = 2000;
+        long viInitDelay = _defaultViInitDelay;
+        int sizeAfterSubmit = _defaultSizeAfterSumit;
+        long finishSleep = 10000;
+        int finalSize = _minSize;
+        threadPoolSubmitTaskTest(taskCount, taskSleep, viInitDelay, sizeAfterSubmit, finishSleep, finalSize,
+                newThreadPool(), SubmissionMode.SelfSelf);
     }
 
 }
