@@ -17,7 +17,6 @@ public class DefaultAutoScaleObjectPool<T> extends DefaultObjectPool<T> implemen
 
     private static Logger _logger = LoggerFactory.getLogger(DefaultAutoScaleObjectPool.class);
 
-    protected Object _scaleLock;
     protected ScheduledExecutorService _taskScheduler;
 
     public DefaultAutoScaleObjectPool(AutoScaleObjectPoolConfig<T> config) {
@@ -28,7 +27,6 @@ public class DefaultAutoScaleObjectPool<T> extends DefaultObjectPool<T> implemen
     protected void init() {
         super.init();
 
-        _scaleLock = new Object();
         _taskScheduler = Executors.newSingleThreadScheduledExecutor();
         _taskScheduler.scheduleWithFixedDelay(() -> DefaultAutoScaleObjectPool.this.autoCheck(),
                 getConfig().getCheckInterval(), getConfig().getCheckInterval(), TimeUnit.MILLISECONDS);
@@ -36,35 +34,33 @@ public class DefaultAutoScaleObjectPool<T> extends DefaultObjectPool<T> implemen
 
     @Override
     protected DefaultEntry<T> tryAddNewEntryAndAcquireOne() {
-        synchronized (_scaleLock) {
-            DefaultEntry<T> entry = super.tryAddNewEntryAndAcquireOne();
-            if (entry != null)
-                tryAddNewEntry(getConfig().getScaleFactor() - 1);
+        DefaultEntry<T> entry = super.tryAddNewEntryAndAcquireOne();
+        if (entry != null)
+            tryAddNewEntry(getConfig().getScaleFactor() - 1);
 
-            return entry;
-        }
+        return entry;
     }
 
     @Override
     protected void addNewEntry(DefaultEntry<T> entry) {
-        synchronized (((AutoScaleEntry<T>) entry).getNumber()) {
+        synchronized (((AutoScaleEntry<T>) entry).getKey()) {
             super.addNewEntry(entry);
         }
     }
 
     @Override
-    protected AutoScaleEntry<T> newPoolEntry(Integer number) {
-        return (AutoScaleEntry<T>) super.newPoolEntry(number);
+    protected AutoScaleEntry<T> newPoolEntry(Object key) {
+        return (AutoScaleEntry<T>) super.newPoolEntry(key);
     }
 
     @Override
-    protected AutoScaleEntry<T> newConcretePoolEntry(Integer number) {
-        return new AutoScaleEntry<T>(number, newObject());
+    protected AutoScaleEntry<T> newConcretePoolEntry(Object key, T obj) {
+        return new AutoScaleEntry<T>(key, obj);
     }
 
     @Override
-    protected AutoScaleEntry<T> getEntry(Integer number) {
-        return (AutoScaleEntry<T>) super.getEntry(number);
+    protected AutoScaleEntry<T> getEntry(Object key) {
+        return (AutoScaleEntry<T>) super.getEntry(key);
     }
 
     @Override
@@ -73,8 +69,8 @@ public class DefaultAutoScaleObjectPool<T> extends DefaultObjectPool<T> implemen
     }
 
     @Override
-    protected AutoScaleEntry<T> tryAcquire(Integer number) {
-        AutoScaleEntry<T> entry = doAcquire(number);
+    protected AutoScaleEntry<T> tryAcquire(Object key) {
+        AutoScaleEntry<T> entry = doAcquire(key);
         if (entry != null)
             return entry;
 
@@ -82,8 +78,8 @@ public class DefaultAutoScaleObjectPool<T> extends DefaultObjectPool<T> implemen
     }
 
     @Override
-    protected AutoScaleEntry<T> acquire(Integer number) throws InterruptedException {
-        AutoScaleEntry<T> entry = doAcquire(number);
+    protected AutoScaleEntry<T> acquire(Object key) throws InterruptedException {
+        AutoScaleEntry<T> entry = doAcquire(key);
         if (entry != null)
             return entry;
 
@@ -91,10 +87,10 @@ public class DefaultAutoScaleObjectPool<T> extends DefaultObjectPool<T> implemen
     }
 
     @Override
-    protected AutoScaleEntry<T> doAcquire(Integer number) {
+    protected AutoScaleEntry<T> doAcquire(Object key) {
         AutoScaleEntry<T> entry;
-        synchronized (number) {
-            entry = (AutoScaleEntry<T>) super.doAcquire(number);
+        synchronized (key) {
+            entry = (AutoScaleEntry<T>) super.doAcquire(key);
             if (!needRefresh(entry)) {
                 entry.renew();
                 return entry;
@@ -103,22 +99,22 @@ public class DefaultAutoScaleObjectPool<T> extends DefaultObjectPool<T> implemen
             }
         }
 
-        releaseNumber(number);
+        releaseNumber(key);
         return null;
     }
 
     @Override
-    protected void releaseNumber(Integer number) {
+    protected void releaseNumber(Object key) {
         try {
-            _taskScheduler.submit(() -> doReleaseNumber(number));
+            _taskScheduler.submit(() -> doReleaseNumber(key));
         } catch (Exception ex) {
-            doReleaseNumber(number);
+            doReleaseNumber(key);
         }
     }
 
-    protected void doReleaseNumber(Integer number) {
-        synchronized (number) {
-            AutoScaleEntry<T> entry = getEntry(number);
+    protected void doReleaseNumber(Object key) {
+        synchronized (key) {
+            AutoScaleEntry<T> entry = getEntry(key);
             if (entry.getStatus() == AutoScaleEntry.Status.PENDING_REFRESH) {
                 if (!tryRefresh(entry)) {
                     scaleIn(entry);
@@ -127,31 +123,31 @@ public class DefaultAutoScaleObjectPool<T> extends DefaultObjectPool<T> implemen
             } else
                 entry.renew();
 
-            super.releaseNumber(number);
+            super.releaseNumber(key);
         }
     }
 
     protected void autoCheck() {
-        for (Integer number : _entries.keySet()) {
-            if (tryScaleIn(number))
+        for (Object key : _entries.keySet()) {
+            if (tryScaleIn(key))
                 continue;
 
-            tryRefresh(number);
+            tryRefresh(key);
         }
     }
 
-    protected boolean tryScaleIn(Integer number) {
-        AutoScaleEntry<T> entry = getEntry(number);
+    protected boolean tryScaleIn(Object key) {
+        AutoScaleEntry<T> entry = getEntry(key);
         if (!needScaleIn(entry))
             return false;
 
-        synchronized (number) {
-            synchronized (_scaleLock) {
-                entry = getEntry(number);
+        synchronized (key) {
+            synchronized (_addLock) {
+                entry = getEntry(key);
                 if (!needScaleIn(entry))
                     return false;
 
-                if (!_availableNumbers.remove(number))
+                if (!_availableKeys.remove(key))
                     return false;
 
                 scaleIn(entry);
@@ -161,20 +157,19 @@ public class DefaultAutoScaleObjectPool<T> extends DefaultObjectPool<T> implemen
     }
 
     protected void scaleIn(AutoScaleEntry<T> entry) {
-        synchronized (_scaleLock) {
-            _entries.remove(entry.getNumber());
-            _numberPool.add(entry.getNumber());
+        synchronized (_addLock) {
+            _entries.remove(entry.getKey());
             close(entry);
         }
     }
 
-    protected boolean tryRefresh(Integer number) {
-        AutoScaleEntry<T> entry = getEntry(number);
+    protected boolean tryRefresh(Object key) {
+        AutoScaleEntry<T> entry = getEntry(key);
         if (!needRefresh(entry))
             return false;
 
-        synchronized (number) {
-            entry = getEntry(number);
+        synchronized (key) {
+            entry = getEntry(key);
             if (!needRefresh(entry))
                 return false;
 
@@ -189,14 +184,14 @@ public class DefaultAutoScaleObjectPool<T> extends DefaultObjectPool<T> implemen
     protected boolean tryRefresh(AutoScaleEntry<T> entry) {
         AutoScaleEntry<T> newEntry = null;
         try {
-            newEntry = newPoolEntry(entry.getNumber());
+            newEntry = newPoolEntry(entry.getKey());
         } catch (Exception e) {
             _logger.error("failed to get object from object factory", e);
             return false;
         }
 
         close(entry);
-        _entries.put(entry.getNumber(), newEntry);
+        _entries.put(entry.getKey(), newEntry);
 
         return true;
     }
@@ -244,16 +239,16 @@ public class DefaultAutoScaleObjectPool<T> extends DefaultObjectPool<T> implemen
         private long _creationTime;
         private volatile long _lastUsedTime;
 
-        protected AutoScaleEntry(Integer index, T obj) {
-            super(index, obj);
+        protected AutoScaleEntry(Object key, T obj) {
+            super(key, obj);
 
             _creationTime = System.currentTimeMillis();
             _lastUsedTime = _creationTime;
         }
 
         @Override
-        protected Integer getNumber() {
-            return super.getNumber();
+        protected Object getKey() {
+            return super.getKey();
         }
 
         @Override
