@@ -87,7 +87,7 @@ public class ObjectPoolTest {
         long taskSleep = 500;
         long viInitDelay = _defaultViInitDelay;
         int sizeAfterSubmit = _maxSize;
-        long finishSleep = 1000;
+        long finishSleep = 5000;
         int finalSize = _maxSize;
         threadPoolSubmitTaskTest(taskCount, taskSleep, viInitDelay, sizeAfterSubmit, finishSleep, finalSize);
     }
@@ -95,7 +95,7 @@ public class ObjectPoolTest {
     @Test
     public void threadPoolSubmitTaskTest5() throws IOException, InterruptedException {
         int taskCount = 200;
-        long taskSleep = 2000;
+        long taskSleep = 50;
         long viInitDelay = _defaultViInitDelay;
         int sizeAfterSubmit = _maxSize;
         long finishSleep = 1000;
@@ -103,8 +103,25 @@ public class ObjectPoolTest {
         threadPoolSubmitTaskTest(taskCount, taskSleep, viInitDelay, sizeAfterSubmit, finishSleep, finalSize);
     }
 
+    @Test
+    public void threadPoolSubmitTaskTest6() throws IOException, InterruptedException {
+        int taskCount = 200;
+        long taskSleep = 2000;
+        long viInitDelay = _defaultViInitDelay;
+        int sizeAfterSubmit = _maxSize;
+        long finishSleep = 5000;
+        int finalSize = _maxSize;
+        threadPoolSubmitTaskTest(taskCount, taskSleep, viInitDelay, sizeAfterSubmit, finishSleep, finalSize);
+    }
+
     protected void threadPoolSubmitTaskTest(int taskCount, long taskSleep, long viInitDelay, int sizeAfterSubmit,
             long finishSleep, int finalSize) throws IOException, InterruptedException {
+        threadPoolSubmitTaskTest(taskCount, taskSleep, viInitDelay, sizeAfterSubmit, finishSleep, finalSize,
+                newThreadPool());
+    }
+
+    protected void threadPoolSubmitTaskTest(int taskCount, long taskSleep, long viInitDelay, int sizeAfterSubmit,
+            long finishSleep, int finalSize, ThreadPool customPool) throws IOException, InterruptedException {
         System.out.println();
         System.out.println();
 
@@ -123,7 +140,7 @@ public class ObjectPoolTest {
         };
         long now = System.currentTimeMillis();
         ScheduledExecutorService executorService = null;
-        try (ThreadPool pool = newThreadPool()) {
+        try (ThreadPool pool = customPool) {
             System.out.println("new thread pool eclipsed: " + (System.currentTimeMillis() - now));
             System.out.println("counter value: " + counter);
             vi(pool);
