@@ -117,6 +117,20 @@ public class ObjectPoolTest {
     }
 
     @Test
+    public void threadPoolSubmitTaskStressTest() throws IOException, InterruptedException {
+        int count = 100;
+        for (int i = 0; i < count; i++)
+            threadPoolSubmitTaskTest();
+    }
+
+    @Test
+    public void threadPoolSubmitTaskStressTest2() throws IOException, InterruptedException {
+        int count = 100;
+        for (int i = 0; i < count; i++)
+            threadPoolSubmitTaskTest4();
+    }
+
+    @Test
     public void threadPoolSubmitTaskConcurrentTest() throws IOException, InterruptedException {
         int taskCount = 200;
         long taskSleep = 2000;

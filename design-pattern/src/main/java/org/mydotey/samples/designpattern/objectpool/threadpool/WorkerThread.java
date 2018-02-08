@@ -39,22 +39,27 @@ public class WorkerThread extends Thread {
                 if (!_isStarted.get())
                     _isStarted.set(true);
 
+                if (_task != null) {
+                    _task = null;
+
+                    try {
+                        _onTaskComplete.accept(this);
+                    } catch (Exception ex) {
+                        _logger.error("_onTaskComplete threw exception: " + this.getId(), ex);
+                        break;
+                    }
+                }
+
                 try {
                     _lock.wait();
                 } catch (InterruptedException e) {
                     break;
                 }
 
-                if (_task == null)
-                    continue;
-
                 try {
                     _task.run();
                 } catch (Exception e) {
                     _logger.error("task threw exception: " + this.getId(), e);
-                } finally {
-                    _task = null;
-                    _onTaskComplete.accept(this);
                 }
             }
         }
