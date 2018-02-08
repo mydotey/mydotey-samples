@@ -19,6 +19,8 @@ public class DefaultAutoScaleObjectPool<T> extends DefaultObjectPool<T> implemen
 
     protected ScheduledExecutorService _taskScheduler;
 
+    protected Runnable _scaleOutTask = () -> tryAddNewEntry(getConfig().getScaleFactor() - 1);
+
     public DefaultAutoScaleObjectPool(AutoScaleObjectPoolConfig<T> config) {
         super(config);
     }
@@ -38,7 +40,7 @@ public class DefaultAutoScaleObjectPool<T> extends DefaultObjectPool<T> implemen
         if (entry == null)
             return null;
 
-        submitTaskSafe(() -> tryAddNewEntry(getConfig().getScaleFactor() - 1));
+        submitTaskSafe(_scaleOutTask);
         return super.doAcquire(entry);
     }
 
