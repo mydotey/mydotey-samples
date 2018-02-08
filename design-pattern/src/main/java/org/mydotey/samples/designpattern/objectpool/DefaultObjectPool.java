@@ -311,9 +311,14 @@ public class DefaultObjectPool<T> implements ObjectPool<T> {
     protected static class KeyGenerator {
 
         private AtomicLong _counter = new AtomicLong();
+        private static final long MAX = Long.MAX_VALUE / 2;
 
         public Object generateKey() {
-            return new Long(_counter.getAndIncrement());
+            long count = _counter.getAndIncrement();
+            if (count > MAX)
+                _logger.warn("{} objects created, maybe misused", count);
+
+            return new Long(count);
         }
 
     }
