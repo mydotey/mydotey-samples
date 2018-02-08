@@ -34,11 +34,12 @@ public class DefaultAutoScaleObjectPool<T> extends DefaultObjectPool<T> implemen
 
     @Override
     protected DefaultEntry<T> tryAddNewEntryAndAcquireOne() {
-        DefaultEntry<T> entry = super.tryAddNewEntryAndAcquireOne();
-        if (entry != null)
-            tryAddNewEntry(getConfig().getScaleFactor() - 1);
+        DefaultEntry<T> entry = tryCreateNewEntry();
+        if (entry == null)
+            return null;
 
-        return entry;
+        submitTaskSafe(() -> tryAddNewEntry(getConfig().getScaleFactor() - 1));
+        return super.doAcquire(entry);
     }
 
     @Override
@@ -109,11 +110,7 @@ public class DefaultAutoScaleObjectPool<T> extends DefaultObjectPool<T> implemen
 
     @Override
     protected void releaseNumber(Object key) {
-        try {
-            _taskScheduler.submit(() -> doReleaseNumber(key));
-        } catch (Exception ex) {
-            doReleaseNumber(key);
-        }
+        submitTaskSafe(() -> doReleaseNumber(key));
     }
 
     protected void doReleaseNumber(Object key) {
@@ -226,6 +223,14 @@ public class DefaultAutoScaleObjectPool<T> extends DefaultObjectPool<T> implemen
             _taskScheduler.shutdown();
         } catch (Exception e) {
             _logger.error("shutdown thread pool failed.", e);
+        }
+    }
+
+    protected void submitTaskSafe(Runnable task) {
+        try {
+            _taskScheduler.submit(task);
+        } catch (Exception ex) {
+            task.run();
         }
     }
 

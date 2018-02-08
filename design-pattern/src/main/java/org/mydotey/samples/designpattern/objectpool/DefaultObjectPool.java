@@ -67,7 +67,6 @@ public class DefaultObjectPool<T> implements ObjectPool<T> {
     }
 
     protected void addNewEntry(DefaultEntry<T> entry) {
-        _entries.put(entry.getKey(), entry);
         _availableKeys.addFirst(entry.getKey());
     }
 
@@ -91,6 +90,7 @@ public class DefaultObjectPool<T> implements ObjectPool<T> {
             }
 
             entry.setStatus(DefaultEntry.Status.AVAILABLE);
+            _entries.put(entry.getKey(), entry);
             return entry;
         }
     }
@@ -210,7 +210,6 @@ public class DefaultObjectPool<T> implements ObjectPool<T> {
         if (entry == null)
             return null;
 
-        _entries.put(entry.getKey(), entry);
         return doAcquire(entry);
     }
 
