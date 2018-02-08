@@ -88,9 +88,13 @@ public class DefaultAutoScaleObjectPool<T> extends DefaultObjectPool<T> implemen
 
     @Override
     protected AutoScaleEntry<T> doAcquire(Object key) {
-        AutoScaleEntry<T> entry;
         synchronized (key) {
-            entry = (AutoScaleEntry<T>) super.doAcquire(key);
+            AutoScaleEntry<T> entry = getEntry(key);
+            if (entry == null)
+                return null;
+
+            super.doAcquire(entry);
+
             if (!needRefresh(entry)) {
                 entry.renew();
                 return entry;
@@ -142,17 +146,12 @@ public class DefaultAutoScaleObjectPool<T> extends DefaultObjectPool<T> implemen
             return false;
 
         synchronized (key) {
-            synchronized (_addLock) {
-                entry = getEntry(key);
-                if (!needScaleIn(entry))
-                    return false;
+            entry = getEntry(key);
+            if (!needScaleIn(entry))
+                return false;
 
-                if (!_availableKeys.remove(key))
-                    return false;
-
-                scaleIn(entry);
-                return true;
-            }
+            scaleIn(entry);
+            return true;
         }
     }
 

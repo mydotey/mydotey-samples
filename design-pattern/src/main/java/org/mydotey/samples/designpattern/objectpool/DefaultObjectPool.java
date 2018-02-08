@@ -43,7 +43,7 @@ public class DefaultObjectPool<T> implements ObjectPool<T> {
         _entries = new ConcurrentHashMap<>(_config.getMaxSize());
 
         _keyGenerator = new KeyGenerator();
-        _availableKeys = new LinkedBlockingDeque<>(_config.getMaxSize());
+        _availableKeys = new LinkedBlockingDeque<>();
 
         tryAddNewEntry(_config.getMinSize());
     }
@@ -186,6 +186,10 @@ public class DefaultObjectPool<T> implements ObjectPool<T> {
 
     protected DefaultEntry<T> doAcquire(Object key) {
         DefaultEntry<T> entry = getEntry(key);
+        return doAcquire(entry);
+    }
+
+    protected DefaultEntry<T> doAcquire(DefaultEntry<T> entry) {
         entry.setStatus(DefaultEntry.Status.ACQUIRED);
         return entry.clone();
     }
