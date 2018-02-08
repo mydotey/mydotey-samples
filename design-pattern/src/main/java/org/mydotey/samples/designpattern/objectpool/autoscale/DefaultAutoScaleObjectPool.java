@@ -3,6 +3,7 @@ package org.mydotey.samples.designpattern.objectpool.autoscale;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.mydotey.samples.designpattern.objectpool.DefaultObjectPool;
 import org.slf4j.Logger;
@@ -19,7 +20,15 @@ public class DefaultAutoScaleObjectPool<T> extends DefaultObjectPool<T> implemen
 
     protected ScheduledExecutorService _taskScheduler;
 
-    protected Runnable _scaleOutTask = () -> tryAddNewEntry(getConfig().getScaleFactor() - 1);
+    protected AtomicBoolean _scalingOut;
+
+    protected Runnable _scaleOutTask = () -> {
+        try {
+            tryAddNewEntry(getConfig().getScaleFactor() - 1);
+        } finally {
+            _scalingOut.set(false);
+        }
+    };
 
     public DefaultAutoScaleObjectPool(AutoScaleObjectPoolConfig<T> config) {
         super(config);
@@ -32,6 +41,8 @@ public class DefaultAutoScaleObjectPool<T> extends DefaultObjectPool<T> implemen
         _taskScheduler = Executors.newSingleThreadScheduledExecutor();
         _taskScheduler.scheduleWithFixedDelay(() -> DefaultAutoScaleObjectPool.this.autoCheck(),
                 getConfig().getCheckInterval(), getConfig().getCheckInterval(), TimeUnit.MILLISECONDS);
+
+        _scalingOut = new AtomicBoolean();
     }
 
     @Override
@@ -40,7 +51,9 @@ public class DefaultAutoScaleObjectPool<T> extends DefaultObjectPool<T> implemen
         if (entry == null)
             return null;
 
-        submitTaskSafe(_scaleOutTask);
+        if (_scalingOut.compareAndSet(false, true))
+            submitTaskSafe(_scaleOutTask);
+
         return super.doAcquire(entry);
     }
 
