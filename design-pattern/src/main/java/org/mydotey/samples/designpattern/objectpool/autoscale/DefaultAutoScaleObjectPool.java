@@ -206,7 +206,7 @@ public class DefaultAutoScaleObjectPool<T> extends DefaultObjectPool<T> implemen
     }
 
     protected boolean isExpired(AutoScaleEntry<T> entry) {
-        return entry.getCreationTime() + getConfig().getObjectTtl() <= System.currentTimeMillis();
+        return entry.getCreationTime() <= System.currentTimeMillis() - getConfig().getObjectTtl();
     }
 
     protected boolean isStale(AutoScaleEntry<T> entry) {
@@ -220,7 +220,7 @@ public class DefaultAutoScaleObjectPool<T> extends DefaultObjectPool<T> implemen
 
     protected boolean needScaleIn(AutoScaleEntry<T> entry) {
         return entry.getStatus() == AutoScaleEntry.Status.AVAILABLE
-                && entry.getLastUsedTime() + getConfig().getMaxIdleTime() <= System.currentTimeMillis()
+                && entry.getLastUsedTime() <= System.currentTimeMillis() - getConfig().getMaxIdleTime()
                 && getSize() > getConfig().getMinSize();
     }
 
