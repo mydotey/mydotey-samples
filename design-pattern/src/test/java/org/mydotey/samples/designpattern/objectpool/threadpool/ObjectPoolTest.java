@@ -9,6 +9,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.junit.Assert;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.mydotey.samples.designpattern.objectpool.ObjectPool;
 import org.mydotey.samples.designpattern.objectpool.threadpool.ThreadPool;
@@ -117,6 +118,7 @@ public class ObjectPoolTest {
     }
 
     @Test
+    @Ignore
     public void threadPoolSubmitTaskStressTest() throws IOException, InterruptedException {
         int count = 100;
         for (int i = 0; i < count; i++)
@@ -124,6 +126,7 @@ public class ObjectPoolTest {
     }
 
     @Test
+    @Ignore
     public void threadPoolSubmitTaskStressTest2() throws IOException, InterruptedException {
         int count = 100;
         for (int i = 0; i < count; i++)
