@@ -13,6 +13,10 @@ public interface ObjectPool<T> extends Closeable {
 
     int getSize();
 
+    int getAcquiredSize();
+
+    int getAvailableSize();
+
     boolean isClosed();
 
     Entry<T> acquire() throws InterruptedException;

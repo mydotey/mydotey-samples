@@ -6,6 +6,7 @@ import java.util.concurrent.BlockingDeque;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
 import org.slf4j.Logger;
@@ -30,6 +31,8 @@ public class DefaultObjectPool<T> implements ObjectPool<T> {
     protected KeyGenerator _keyGenerator;
     protected BlockingDeque<Object> _availableKeys;
 
+    protected AtomicInteger _acquiredSize;
+
     public DefaultObjectPool(ObjectPoolConfig<T> config) {
         Objects.requireNonNull(config, "config is null");
         _config = config;
@@ -44,6 +47,8 @@ public class DefaultObjectPool<T> implements ObjectPool<T> {
 
         _keyGenerator = new KeyGenerator();
         _availableKeys = new LinkedBlockingDeque<>();
+
+        _acquiredSize = new AtomicInteger();
 
         tryAddNewEntry(_config.getMinSize());
     }
@@ -133,6 +138,17 @@ public class DefaultObjectPool<T> implements ObjectPool<T> {
     }
 
     @Override
+    public int getAcquiredSize() {
+        return _acquiredSize.get();
+    }
+
+    @Override
+    public int getAvailableSize() {
+        int availableSize = getSize() - getAcquiredSize();
+        return availableSize > 0 ? availableSize : 0;
+    }
+
+    @Override
     public boolean isClosed() {
         return _isClosed;
     }
@@ -154,7 +170,7 @@ public class DefaultObjectPool<T> implements ObjectPool<T> {
             checkClosed();
 
             Object key = _availableKeys.pollFirst(1, TimeUnit.SECONDS);
-            if (null != null)
+            if (key != null)
                 return key;
         }
     }
@@ -189,18 +205,18 @@ public class DefaultObjectPool<T> implements ObjectPool<T> {
         return doAcquire(entry);
     }
 
-    protected DefaultEntry<T> doAcquire(DefaultEntry<T> entry) {
-        entry.setStatus(DefaultEntry.Status.ACQUIRED);
-        return entry.clone();
-    }
-
     protected DefaultEntry<T> tryAddNewEntryAndAcquireOne() {
         DefaultEntry<T> entry = tryCreateNewEntry();
         if (entry == null)
             return null;
 
-        entry.setStatus(DefaultEntry.Status.ACQUIRED);
         _entries.put(entry.getKey(), entry);
+        return doAcquire(entry);
+    }
+
+    protected DefaultEntry<T> doAcquire(DefaultEntry<T> entry) {
+        entry.setStatus(DefaultEntry.Status.ACQUIRED);
+        _acquiredSize.incrementAndGet();
         return entry.clone();
     }
 
@@ -218,6 +234,7 @@ public class DefaultObjectPool<T> implements ObjectPool<T> {
                 return;
 
             defaultEntry.setStatus(DefaultEntry.Status.RELEASED);
+            _acquiredSize.decrementAndGet();
         }
 
         releaseNumber(defaultEntry.getKey());
