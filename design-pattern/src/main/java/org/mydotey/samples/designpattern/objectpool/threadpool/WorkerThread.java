@@ -45,7 +45,7 @@ public class WorkerThread extends Thread {
                     try {
                         _onTaskComplete.accept(this);
                     } catch (Exception ex) {
-                        _logger.error("_onTaskComplete threw exception: " + this.getId(), ex);
+                        _logger.error("onTaskComplete threw exception", ex);
                         break;
                     }
                 }
@@ -59,10 +59,12 @@ public class WorkerThread extends Thread {
                 try {
                     _task.run();
                 } catch (Exception e) {
-                    _logger.error("task threw exception: " + this.getId(), e);
+                    _logger.error("task threw exception", e);
                 }
             }
         }
+
+        _logger.info("thread terminated: {}", this);
     }
 
     protected void setTask(Runnable task) {
@@ -88,6 +90,7 @@ public class WorkerThread extends Thread {
             try {
                 Thread.sleep(1);
             } catch (InterruptedException e) {
+                _logger.info("thread {} interrupted when starting", this);
                 break;
             }
         }

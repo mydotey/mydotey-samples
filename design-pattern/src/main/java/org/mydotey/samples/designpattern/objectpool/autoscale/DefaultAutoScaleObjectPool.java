@@ -25,6 +25,9 @@ public class DefaultAutoScaleObjectPool<T> extends DefaultObjectPool<T> implemen
     protected Runnable _scaleOutTask = () -> {
         try {
             tryAddNewEntry(getConfig().getScaleFactor() - 1);
+            _logger.info("scaleOut success");
+        } catch (Exception ex) {
+            _logger.error("scaleOut failed", ex);
         } finally {
             _scalingOut.set(false);
         }
@@ -171,6 +174,7 @@ public class DefaultAutoScaleObjectPool<T> extends DefaultObjectPool<T> implemen
         synchronized (_addLock) {
             _entries.remove(entry.getKey());
             close(entry);
+            _logger.info("scaled in an object: {}", entry.getObject());
         }
     }
 
@@ -197,13 +201,15 @@ public class DefaultAutoScaleObjectPool<T> extends DefaultObjectPool<T> implemen
         try {
             newEntry = newPoolEntry(entry.getKey());
         } catch (Exception e) {
-            _logger.error("failed to get object from object factory", e);
+            String errorMessage = String.format("failed to refresh object: %s, still use it", entry.getObject());
+            _logger.error(errorMessage, e);
             return false;
         }
 
         close(entry);
         _entries.put(entry.getKey(), newEntry);
 
+        _logger.info("refreshed an object, old: {}, new: {}", entry.getObject(), newEntry.getObject());
         return true;
     }
 

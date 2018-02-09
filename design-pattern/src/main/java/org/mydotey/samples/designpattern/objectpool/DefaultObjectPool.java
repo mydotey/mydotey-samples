@@ -81,14 +81,7 @@ public class DefaultObjectPool<T> implements ObjectPool<T> {
             if (getSize() == _config.getMaxSize())
                 return null;
 
-            DefaultEntry<T> entry = null;
-            try {
-                entry = newPoolEntry();
-            } catch (Exception e) {
-                _logger.error("failed to new object", e);
-                throw e;
-            }
-
+            DefaultEntry<T> entry = newPoolEntry();
             entry.setStatus(DefaultEntry.Status.AVAILABLE);
             _entries.put(entry.getKey(), entry);
             return entry;
@@ -105,7 +98,6 @@ public class DefaultObjectPool<T> implements ObjectPool<T> {
             _config.getOnCreate().accept(entry);
         } catch (Exception e) {
             _logger.error("onEntryCreate failed", e);
-            throw e;
         }
 
         return entry;
@@ -117,9 +109,12 @@ public class DefaultObjectPool<T> implements ObjectPool<T> {
 
     protected T newObject() {
         T obj = _config.getObjectFactory().get();
-        if (obj == null)
-            throw new IllegalStateException("got null from the object factory");
+        if (obj == null) {
+            _logger.error("object factory generated null, the object factory has bug");
+            throw new IllegalStateException("object factory generated null");
+        }
 
+        _logger.info("new object created: {}", obj);
         return obj;
     }
 
