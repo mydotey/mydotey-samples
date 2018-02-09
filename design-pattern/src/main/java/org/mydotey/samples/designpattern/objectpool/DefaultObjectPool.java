@@ -26,10 +26,9 @@ public class DefaultObjectPool<T> implements ObjectPool<T> {
     protected Object _addLock;
     protected volatile boolean _isClosed;
 
-    protected ConcurrentHashMap<Object, Entry<T>> _entries;
-
     protected KeyGenerator _keyGenerator;
     protected BlockingDeque<Object> _availableKeys;
+    protected ConcurrentHashMap<Object, Entry<T>> _entries;
 
     protected AtomicInteger _acquiredSize;
 
@@ -37,18 +36,16 @@ public class DefaultObjectPool<T> implements ObjectPool<T> {
         Objects.requireNonNull(config, "config is null");
         _config = config;
 
+        _addLock = new Object();
+        _acquiredSize = new AtomicInteger();
+
         init();
     }
 
     protected void init() {
-        _addLock = new Object();
-
-        _entries = new ConcurrentHashMap<>(_config.getMaxSize());
-
         _keyGenerator = new KeyGenerator();
-        _availableKeys = new LinkedBlockingDeque<>();
-
-        _acquiredSize = new AtomicInteger();
+        _availableKeys = new LinkedBlockingDeque<>(_config.getMaxSize());
+        _entries = new ConcurrentHashMap<>(_config.getMaxSize());
 
         tryAddNewEntry(_config.getMinSize());
     }
@@ -323,6 +320,10 @@ public class DefaultObjectPool<T> implements ObjectPool<T> {
 
         private AtomicLong _counter = new AtomicLong();
         private static final long MAX = Long.MAX_VALUE / 2;
+
+        public KeyGenerator() {
+
+        }
 
         public Object generateKey() {
             long count = _counter.getAndIncrement();
