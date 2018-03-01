@@ -5,9 +5,9 @@ package org.mydotey.samples.designpattern.interpreter;
  *
  * Mar 1, 2018
  */
-public class Number extends AbstractExpression {
+public class NumberExpression extends AbstractExpression {
 
-    public Number(String expression) {
+    public NumberExpression(String expression) {
         super(expression);
     }
 

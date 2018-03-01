@@ -13,14 +13,11 @@ public class GeneralExpression extends AbstractExpression {
 
     @Override
     public double caculate() {
-        String expression = getExpression();
+        String expression = getExpression().replace(" ", "").replace("-", "+-");
         if (expression.indexOf("+") != -1)
-            return new PlusExpression(getExpression()).caculate();
+            return new PlusExpression(expression).caculate();
 
-        if (expression.indexOf("-") != -1)
-            return new MinusExpression(getExpression()).caculate();
-
-        return new Number(expression).caculate();
+        return new NumberExpression(expression).caculate();
     }
 
 }
