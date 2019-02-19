@@ -47,8 +47,12 @@ public class BlockingCollectionTest {
 
         Thread.sleep(100);
 
-        assertBlockState(thread);
-        thread.interrupt();
+        try {
+            assertBlockState(thread);
+        } finally {
+            if (thread.isAlive())
+                thread.interrupt();
+        }
     }
 
     @Test
@@ -65,8 +69,12 @@ public class BlockingCollectionTest {
 
         Thread.sleep(100);
 
-        assertBlockState(thread);
-        thread.interrupt();
+        try {
+            assertBlockState(thread);
+        } finally {
+            if (thread.isAlive())
+                thread.interrupt();
+        }
     }
 
     @Test
@@ -117,8 +125,16 @@ public class BlockingCollectionTest {
         thread2.start();
 
         boolean success = latch.await(5, TimeUnit.SECONDS);
-        Assert.assertTrue(success);
-        Assert.assertFalse(failed.get());
+        try {
+            Assert.assertTrue(success);
+            Assert.assertFalse(failed.get());
+        } finally {
+            if (thread.isAlive())
+                thread.interrupt();
+
+            if (thread2.isAlive())
+                thread2.interrupt();
+        }
     }
 
     protected void assertBlockState(Thread thread) {
