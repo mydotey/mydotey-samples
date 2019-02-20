@@ -2,8 +2,6 @@ package org.mydotey.samples.algorithm.search;
 
 import java.util.List;
 
-import org.mydotey.java.ObjectExtension;
-
 /**
  * @author koqizhao
  *
@@ -12,16 +10,9 @@ import org.mydotey.java.ObjectExtension;
 public class BinarySearcher implements Searcher {
 
     @Override
-    public <T extends Comparable<T>> int search(List<T> data, T item) {
-        if (data == null)
-            return -1;
+    public <T extends Comparable<T>> int search(List<T> data, int startIndex, int endIndex, T item) {
+        Searcher.checkArguments(data, startIndex, endIndex, item);
 
-        ObjectExtension.requireNonNull(item, "item");
-
-        return search(data, 0, data.size(), item);
-    }
-
-    protected <T extends Comparable<T>> int search(List<T> data, int startIndex, int endIndex, T item) {
         int length = endIndex - startIndex;
         if (length == 0)
             return -1;
