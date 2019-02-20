@@ -7,17 +7,10 @@ import java.util.List;
  *
  * Feb 19, 2019
  */
-public class QuickSorter implements Sorter {
+public class QuickSorter extends AbstractSorter {
 
     @Override
-    public <T extends Comparable<T>> void sort(List<T> data) {
-        if (data == null)
-            return;
-
-        sort(data, 0, data.size());
-    }
-
-    protected <T extends Comparable<T>> void sort(List<T> data, int startIndex, int endIndex) {
+    protected <T extends Comparable<T>> void doSort(List<T> data, int startIndex, int endIndex) {
         int length = endIndex - startIndex;
         if (length <= 1)
             return;
@@ -42,8 +35,8 @@ public class QuickSorter implements Sorter {
 
         data.set(pivot, item);
 
-        sort(data, startIndex, pivot);
-        sort(data, pivot + 1, endIndex);
+        doSort(data, startIndex, pivot);
+        doSort(data, pivot + 1, endIndex);
     }
 
 }

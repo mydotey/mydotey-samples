@@ -7,16 +7,13 @@ import java.util.List;
  *
  * Feb 20, 2019
  */
-public class BubbleSorter implements Sorter {
+public class BubbleSorter extends AbstractSorter {
 
     @Override
-    public <T extends Comparable<T>> void sort(List<T> data) {
-        if (data == null)
-            return;
-
+    protected <T extends Comparable<T>> void doSort(List<T> data, int startIndex, int endIndex) {
         while (true) {
             boolean swapped = false;
-            for (int i = 0; i < data.size() - 1; i++) {
+            for (int i = startIndex; i < endIndex - 1; i++) {
                 if (data.get(i).compareTo(data.get(i + 1)) > 0) {
                     Sorter.swap(data, i, i + 1);
                     swapped = true;

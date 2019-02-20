@@ -7,12 +7,10 @@ import java.util.List;
  *
  * Feb 20, 2019
  */
-public class BinarySearcher implements Searcher {
+public class BinarySearcher extends AbstractSearcher {
 
     @Override
-    public <T extends Comparable<T>> int search(List<T> data, int startIndex, int endIndex, T item) {
-        Searcher.checkArguments(data, startIndex, endIndex, item);
-
+    protected <T extends Comparable<T>> int doSearch(List<T> data, int startIndex, int endIndex, T item) {
         int length = endIndex - startIndex;
         if (length == 0)
             return -1;
@@ -22,9 +20,9 @@ public class BinarySearcher implements Searcher {
         if (compareResult == 0)
             return middleIndex;
         else if (compareResult > 0)
-            return search(data, startIndex, middleIndex, item);
+            return doSearch(data, startIndex, middleIndex, item);
         else
-            return search(data, middleIndex + 1, endIndex, item);
+            return doSearch(data, middleIndex + 1, endIndex, item);
     }
 
 }

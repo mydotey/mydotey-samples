@@ -66,6 +66,11 @@ public class BinarySearchTest extends SearchTest {
         index = -1;
         parameterValues.add(new Object[] { data, item, index });
 
+        data = null;
+        item = 1;
+        index = -1;
+        parameterValues.add(new Object[] { data, item, index });
+
         return parameterValues;
     }
 

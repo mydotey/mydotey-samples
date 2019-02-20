@@ -7,15 +7,12 @@ import java.util.List;
  *
  * Feb 20, 2019
  */
-public class SelectionSorter implements Sorter {
+public class SelectionSorter extends AbstractSorter {
 
     @Override
-    public <T extends Comparable<T>> void sort(List<T> data) {
-        if (data == null)
-            return;
-
-        for (int i = 0; i < data.size() - 1; i++) {
-            for (int j = i; j < data.size(); j++) {
+    protected <T extends Comparable<T>> void doSort(List<T> data, int startIndex, int endIndex) {
+        for (int i = startIndex; i < endIndex - 1; i++) {
+            for (int j = i + 1; j < endIndex; j++) {
                 if (data.get(i).compareTo(data.get(j)) > 0)
                     Sorter.swap(data, i, j);
             }
