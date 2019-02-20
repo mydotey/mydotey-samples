@@ -46,6 +46,10 @@ public abstract class SortTest {
         sorted = Arrays.asList(1, 2, 3, 4, 5);
         parameterValues.add(new Object[] { data, sorted });
 
+        data = Arrays.asList(5, 5, 5, 5, 5);
+        sorted = Arrays.asList(5, 5, 5, 5, 5);
+        parameterValues.add(new Object[] { data, sorted });
+
         data = Arrays.asList(1);
         sorted = Arrays.asList(1);
         parameterValues.add(new Object[] { data, sorted });
@@ -60,6 +64,10 @@ public abstract class SortTest {
 
         data = Arrays.asList();
         sorted = Arrays.asList();
+        parameterValues.add(new Object[] { data, sorted });
+
+        data = null;
+        sorted = null;
         parameterValues.add(new Object[] { data, sorted });
 
         return parameterValues;
