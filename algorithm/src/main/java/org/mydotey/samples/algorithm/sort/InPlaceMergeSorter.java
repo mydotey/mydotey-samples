@@ -24,8 +24,8 @@ public class InPlaceMergeSorter extends MergeSorter {
 
         for (int l = middle; l < j; l++) {
             T item = data.get(l);
-            for (int m = l - 1; m >= i; m--)
-                data.set(m + 1, data.get(m));
+            for (int m = l; m > i; m--)
+                data.set(m, data.get(m - 1));
             data.set(i++, item);
         }
 
