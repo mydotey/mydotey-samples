@@ -16,8 +16,7 @@ public class RoundRobinLoadBalancer extends AbstractLoadBalancer {
     public Server chooseServer() {
         List<Server> servers = getServers();
         int count = _count.getAndIncrement();
-        if (count > Integer.MAX_VALUE / 2)
-            _count.set(0);
+        count &= Integer.MAX_VALUE;
         int index = count % servers.size();
         return servers.get(index);
     }
