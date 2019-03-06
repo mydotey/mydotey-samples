@@ -27,6 +27,10 @@ public abstract class LoadBalanceTest {
 
     protected abstract LoadBalancer newLoadBalancer();
 
+    protected LoadBalancer getLoadBalancer() {
+        return _loadBalancer;
+    }
+
     @Before
     public void setUp() {
         System.out.printf("\nservers: %s\n\n", servers);
@@ -37,8 +41,9 @@ public abstract class LoadBalanceTest {
 
     @Test
     public void chooseServer() {
+        LoadBalancer loadBalancer = getLoadBalancer();
         for (int i = 0; i < chooseTimes; i++) {
-            Server server = _loadBalancer.chooseServer();
+            Server server = loadBalancer.chooseServer();
             Assert.assertNotNull(server);
             System.out.printf("times: %s, server: %s\n", i, server);
         }

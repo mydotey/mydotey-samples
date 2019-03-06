@@ -7,4 +7,10 @@ package org.mydotey.samples.algorithm.loadbalance;
  */
 public class ConcreteServer implements Server {
 
+    @Override
+    public String toString() {
+        String[] parts = super.toString().split("\\.");
+        return parts[parts.length - 1];
+    }
+
 }
