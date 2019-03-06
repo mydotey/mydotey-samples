@@ -56,18 +56,17 @@ public class HashLoadBalancerTest extends LoadBalanceTest {
 
     @Override
     protected LoadBalancer newLoadBalancer() {
-        return new HashLoadBalancer<String>();
+        return new HashLoadBalancer();
     }
 
-    @SuppressWarnings("unchecked")
     @Override
-    protected HashLoadBalancer<String> getLoadBalancer() {
-        return (HashLoadBalancer<String>) super.getLoadBalancer();
+    protected HashLoadBalancer getLoadBalancer() {
+        return (HashLoadBalancer) super.getLoadBalancer();
     }
 
     @Test
     public void chooseServer() {
-        HashLoadBalancer<String> loadBalancer = getLoadBalancer();
+        HashLoadBalancer loadBalancer = getLoadBalancer();
         for (String key : keys) {
             System.out.printf("\nfor key: %s\n\n", key);
             loadBalancer.setKey(key);

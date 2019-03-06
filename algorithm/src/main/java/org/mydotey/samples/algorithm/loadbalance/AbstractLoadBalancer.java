@@ -25,7 +25,7 @@ public abstract class AbstractLoadBalancer implements LoadBalancer {
     }
 
     @Override
-    public void setServers(List<Server> servers) {
+    public synchronized void setServers(List<Server> servers) {
         ObjectExtension.requireNonEmpty(servers, "servers");
 
         _servers = Collections.unmodifiableList(new ArrayList<>(servers));

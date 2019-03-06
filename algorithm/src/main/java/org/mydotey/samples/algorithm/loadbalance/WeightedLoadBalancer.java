@@ -21,7 +21,7 @@ public class WeightedLoadBalancer extends AbstractLoadBalancer {
     }
 
     @Override
-    public void setServers(List<Server> servers) {
+    public synchronized void setServers(List<Server> servers) {
         if (servers != null)
             servers.forEach(s -> {
                 if (s instanceof WeightedServer)
