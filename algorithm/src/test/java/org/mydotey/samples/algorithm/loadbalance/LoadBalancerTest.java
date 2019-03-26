@@ -15,7 +15,7 @@ import org.junit.runners.Parameterized.Parameter;
  * Mar 6, 2019
  */
 @RunWith(Parameterized.class)
-public abstract class LoadBalanceTest {
+public abstract class LoadBalancerTest {
 
     @Parameter(0)
     public List<Server> servers;

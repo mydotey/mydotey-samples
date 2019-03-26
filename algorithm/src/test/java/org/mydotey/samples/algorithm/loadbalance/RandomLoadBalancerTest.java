@@ -13,7 +13,7 @@ import org.junit.runners.Parameterized.Parameters;
  *
  * Mar 6, 2019
  */
-public class RandomLoadBalancerTest extends LoadBalanceTest {
+public class RandomLoadBalancerTest extends LoadBalancerTest {
 
     @Parameters(name = "{index}: servers={0}, chooseTimes={1}")
     public static Collection<Object[]> data() {

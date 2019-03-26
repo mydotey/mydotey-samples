@@ -16,7 +16,7 @@ import org.mydotey.java.ObjectExtension;
  *
  * Mar 6, 2019
  */
-public class HashLoadBalancerTest extends LoadBalanceTest {
+public class HashLoadBalancerTest extends LoadBalancerTest {
 
     @Parameters(name = "{index}: servers={0}, chooseTimes={1}, keys={2}")
     public static Collection<Object[]> data() {
