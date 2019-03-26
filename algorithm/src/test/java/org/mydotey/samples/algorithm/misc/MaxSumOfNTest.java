@@ -21,7 +21,7 @@ import org.mydotey.samples.algorithm.misc.MaxSumOfN;
 @RunWith(Parameterized.class)
 public class MaxSumOfNTest {
 
-    @Parameters(name = "{index}: numbers={0}, gcd={1}")
+    @Parameters(name = "{index}: numbers={0}, seq={1}")
     public static Collection<Object[]> data() {
         List<Object[]> parameterValues = new ArrayList<>();
         int[] numbers;

@@ -19,7 +19,7 @@ import org.junit.runners.Parameterized.Parameters;
 @RunWith(Parameterized.class)
 public class LcmTest {
 
-    @Parameters(name = "{index}: numbers={0}, gcd={1}")
+    @Parameters(name = "{index}: numbers={0}, lcm={1}")
     public static Collection<Object[]> data() {
         List<Object[]> parameterValues = new ArrayList<>();
         int[] numbers;
