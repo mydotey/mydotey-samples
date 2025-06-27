@@ -10,7 +10,7 @@
         <relativePath>../pom.xml</relativePath>
     </parent>
 
-    <artifactId>mydotey-design-pattern-samples</artifactId>
+    <artifactId>algorithm-samples</artifactId>
     <packaging>jar</packaging>
 
     <name>mydotey design pattern samples</name>
