@@ -14,20 +14,24 @@ fn _merge_sort<T: PartialOrd>(arr: &mut [T], start: usize, end: usize) {
     _merge_sort(arr, 0, mid);
     _merge_sort(arr, mid, end);
 
-    let left = start;
+    let mut greater = start;
     for i in mid..end {
-        for j in left..i {
+        for j in greater..i {
+            greater += 1;
             if arr[j] > arr[i] {
                 unsafe {
-                    let p = &arr[i] as *const T as *mut T;
-                    let temp = read(p);
+                    let temp = read(&arr[i] as *const T);
                     for k in (j..i).rev() {
-                        let p = &arr[k] as *const T as *mut T;
-                        arr[k + 1] = read(p);
+                        arr[k + 1] = read(&arr[k] as *const T);
                     }
                     arr[j] = temp;
                 }
+                break;
             }
+        }
+
+        if greater == i {
+            break;
         }
     }
 }
