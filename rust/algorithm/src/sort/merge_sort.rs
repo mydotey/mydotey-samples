@@ -1,4 +1,4 @@
-use std::ptr::read;
+use super::ArrayInsert;
 
 static MERGER1: _Merger1 = _Merger1;
 static MERGER2: _Merger2 = _Merger2;
@@ -34,13 +34,7 @@ impl<T: PartialOrd> Merger<T> for _Merger1 {
             for j in greater..i {
                 greater += 1;
                 if arr[j] > arr[i] {
-                    unsafe {
-                        let temp = read(&arr[i] as *const T);
-                        for k in (j..i).rev() {
-                            arr[k + 1] = read(&arr[k] as *const T);
-                        }
-                        arr[j] = temp;
-                    }
+                    arr.insert(i, j);
                     break;
                 }
             }
@@ -76,17 +70,13 @@ impl<T: PartialOrd> Merger<T> for _Merger2 {
         }
 
         let new_mid = right + 1;
+        let new_start = left + (new_mid - mid);
         for i in mid..new_mid {
-            unsafe {
-                let temp = read(&arr[i] as *const T);
-                for j in (left..i).rev() {
-                    arr[j + 1] = read(&arr[j] as *const T);
-                }
-                arr[left] = temp;
-            }
+            arr.insert(i, left);
+            left += 1;
         }
 
-        self.merge(arr, left + new_mid - mid, new_mid, end);
+        self.merge(arr, new_start, new_mid, end);
     }
 }
 
