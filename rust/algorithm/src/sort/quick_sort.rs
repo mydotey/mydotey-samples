@@ -9,10 +9,6 @@ pub fn quick_sort<T: Ord>(arr: &mut [T]) {
 }
 
 fn partition<T: Ord>(arr: &mut [T]) -> usize {
-    if arr.len() <= 1 {
-        return 0;
-    }
-
     let mut pivot_index = arr.len() / 2;
     let (mut i, mut j) = (0, arr.len());
     while i < j {
