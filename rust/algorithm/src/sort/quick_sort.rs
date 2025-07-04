@@ -17,22 +17,22 @@ fn partition<T: Ord>(arr: &mut [T]) -> usize {
     let (mut i, mut j) = (0, arr.len());
     while i < j {
         for k in i..pivot_index {
-            i += 1;
             if arr[k] > arr[pivot_index] {
                 arr.swap(k, pivot_index);
                 pivot_index = k;
                 break;
             }
         }
+        i = pivot_index + 1;
 
-        for k in (pivot_index + 1..j).rev() {
-            j -= 1;
+        for k in (i..j).rev() {
             if arr[k] < arr[pivot_index] {
                 arr.swap(k, pivot_index);
                 pivot_index = k;
                 break;
             }
         }
+        j = pivot_index;
     }
     pivot_index
 }
