@@ -10,6 +10,9 @@ pub use merge_sort::*;
 mod insertion_sort;
 pub use insertion_sort::*;
 
+mod quick_sort;
+pub use quick_sort::*;
+
 pub trait ArrayInsert {
     fn insert(&mut self, from: usize, to: usize);
 }
