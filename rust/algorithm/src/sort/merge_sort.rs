@@ -1,4 +1,4 @@
-use super::ArrayInsert;
+use lang_extension::slice::SliceExtention;
 
 static MERGER1: _Merger1 = _Merger1;
 static MERGER2: _Merger2 = _Merger2;
@@ -34,7 +34,7 @@ impl<T: PartialOrd> Merger<T> for _Merger1 {
             for j in greater..i {
                 greater += 1;
                 if arr[j] > arr[i] {
-                    arr.insert(i, j);
+                    arr.lift(i, j);
                     break;
                 }
             }
@@ -72,7 +72,7 @@ impl<T: PartialOrd> Merger<T> for _Merger2 {
         let new_mid = right + 1;
         let new_start = left + (new_mid - mid);
         for i in mid..new_mid {
-            arr.insert(i, left);
+            arr.lift(i, left);
             left += 1;
         }
 

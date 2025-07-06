@@ -1,4 +1,4 @@
-use super::ArrayInsert;
+use lang_extension::slice::SliceExtention;
 
 pub fn insertion_sort<T: PartialOrd>(arr: &mut [T]) {
     _insertion_sort(arr, 0, arr.len());
@@ -18,7 +18,7 @@ fn _insertion_sort<T: PartialOrd>(arr: &mut [T], start: usize, end: usize) {
     };
 
     let i = f(arr, end - 1, start, end - 1);
-    arr.insert(end - 1, i);
+    arr.lift(end - 1, i);
 }
 
 fn search<T: PartialOrd>(arr: &[T], value_index: usize, start: usize, end: usize) -> usize {

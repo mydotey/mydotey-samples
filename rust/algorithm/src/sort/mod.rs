@@ -13,40 +13,19 @@ pub use insertion_sort::*;
 mod quick_sort;
 pub use quick_sort::*;
 
-pub trait ArrayInsert {
-    fn insert(&mut self, from: usize, to: usize);
-}
-
-impl<T: PartialOrd> ArrayInsert for [T] {
-    fn insert(&mut self, from: usize, to: usize) {
-        if from >= self.len() || to >= self.len() || from == to {
-            return;
-        }
-        if from < to {
-            for i in from..to {
-                self.swap(i, i + 1);
-            }
-        } else {
-            for i in (to..from).rev() {
-                self.swap(i + 1, i);
-            }
-        }
-    }
-}
-
 #[cfg(test)]
 mod tests {
+    use lang_extension::slice::SliceExtention;
     use std::ptr::read;
 
-    use super::*;
     #[test]
-    fn test_array_insert() {
+    fn test_array_lift() {
         let mut arr = [1, 2, 3, 4, 5];
-        arr.insert(1, 3);
+        arr.lift(1, 3);
         assert_eq!(arr, [1, 3, 4, 2, 5]);
-        arr.insert(3, 1);
+        arr.lift(3, 1);
         assert_eq!(arr, [1, 2, 3, 4, 5]);
-        arr.insert(4, 0);
+        arr.lift(4, 0);
         assert_eq!(arr, [5, 1, 2, 3, 4]);
     }
 

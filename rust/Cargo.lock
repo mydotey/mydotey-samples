@@ -20,6 +20,9 @@ checksum = "320119579fcad9c21884f5c4861d16174d0e06250625266f50fe6898340abefa"
 [[package]]
 name = "algorithm"
 version = "0.1.0"
+dependencies = [
+ "lang_extension",
+]
 
 [[package]]
 name = "autocfg"
@@ -74,6 +77,12 @@ name = "gimli"
 version = "0.31.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "07e28edb80900c19c28f1072f2e8aeca7fa06b23cd4169cefe1af5aa3260783f"
+
+[[package]]
+name = "lang_extension"
+version = "1.2.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "800495a9bd0a06d0301e1ad1c1df0c0b7d99a4214e2c7eb0ab034bace22213c0"
 
 [[package]]
 name = "libc"
