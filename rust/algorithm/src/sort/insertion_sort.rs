@@ -33,15 +33,16 @@ fn search<T: PartialOrd>(arr: &[T], value_index: usize, start: usize, end: usize
 }
 
 fn binary_search<T: PartialOrd>(arr: &[T], value_index: usize, start: usize, end: usize) -> usize {
-    if end - start <= 1 {
+    let len = end - start;
+    if len <= 1 {
         return end;
     }
 
-    let mid = (start + end) / 2;
-    if arr[mid] < arr[value_index] {
-        search(arr, value_index, mid + 1, end)
-    } else {
+    let mid = start + end / 2;
+    if arr[mid] > arr[value_index] {
         search(arr, value_index, start, mid)
+    } else {
+        search(arr, value_index, mid + 1, end)
     }
 }
 
