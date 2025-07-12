@@ -12,3 +12,6 @@ pub use sequence_of_array::*;
 
 mod max_stock_profit;
 pub use max_stock_profit::*;
+
+mod max_k_of_array;
+pub use max_k_of_array::*;
