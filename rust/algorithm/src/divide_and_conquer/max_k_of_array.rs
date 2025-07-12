@@ -1,3 +1,5 @@
+use std::collections::HashSet;
+
 pub fn kth_max_of_array(arr: &[i32], k: usize) -> Option<i32> {
     if k == 0 || k > arr.len() {
         return None;
@@ -28,6 +30,35 @@ pub fn kth_max_of_array(arr: &[i32], k: usize) -> Option<i32> {
     } else {
         Some(last)
     };
+}
+
+pub fn kth_max_of_array2(arr: &[i32], k: usize) -> Option<i32> {
+    if k == 0 || k > arr.len() {
+        return None;
+    }
+
+    let mut remains_set = HashSet::<usize>::new();
+    remains_set.extend(0..arr.len());
+    let mut max_set = HashSet::<usize>::new();
+    loop {
+        let mut index = None;
+        for i in remains_set.iter() {
+            if index == None {
+                index = Some(*i);
+                continue;
+            }
+
+            if arr[index.unwrap()] < arr[*i] {
+                index = Some(*i);
+            }
+        }
+        let index = index.unwrap();
+        remains_set.remove(&index);
+        max_set.insert(index);
+        if max_set.len() == k {
+            return Some(arr[index]);
+        }
+    }
 }
 
 struct Solution;
@@ -79,5 +110,13 @@ mod tests {
         assert_eq!(Solution::find_kth_largest(arr.clone(), 4), 2);
         assert_eq!(Solution::find_kth_largest(arr.clone(), 5), 1);
         assert_eq!(Solution::find_kth_largest(arr.clone(), 6), 0);
+    }
+
+    #[test]
+    fn test_kth_max_of_array2_1() {
+        let arr = [-1, 2, 0];
+        assert_eq!(kth_max_of_array2(&arr, 1), Some(2));
+        assert_eq!(kth_max_of_array2(&arr, 2), Some(0));
+        assert_eq!(kth_max_of_array2(&arr, 3), Some(-1));
     }
 }
