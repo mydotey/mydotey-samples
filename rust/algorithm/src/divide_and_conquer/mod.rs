@@ -15,3 +15,6 @@ pub use max_stock_profit::*;
 
 mod max_k_of_array;
 pub use max_k_of_array::*;
+
+mod beautiful_array;
+pub use beautiful_array::*;
