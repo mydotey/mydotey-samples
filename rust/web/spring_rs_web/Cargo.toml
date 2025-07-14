@@ -1,0 +1,7 @@
+[package]
+name = "spring_rs_web"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+spring-rs = "0.1.0"
