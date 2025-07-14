@@ -1,0 +1,7 @@
+###
+
+GET http://localhost:8080
+
+###
+
+Get http://localhost:8080/hello/qiang
