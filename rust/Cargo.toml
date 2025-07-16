@@ -1,3 +1,3 @@
 [workspace]
 resolver = "3"
-members = ["algorithm", "misc", "spring_rs_web"]
+members = ["algorithm", "misc", "web/w_spring"]
