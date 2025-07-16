@@ -1,0 +1,16 @@
+###
+
+GET http://localhost:8080
+
+###
+
+GET http://localhost:8080/hey
+
+###
+
+POST http://localhost:8080/echo?
+Content-Type: application/json
+
+{
+  "message": "Hello, Actix!"
+}
