@@ -1,16 +1,23 @@
+mod cmd;
+mod conf;
+mod route;
+
 use actix_web::{App, HttpServer, web};
 use clap::Parser;
 
-mod cmd;
 use cmd::*;
 use config::{Config, File, FileFormat};
-
-mod conf;
-
-mod route;
+use log::{LevelFilter, info};
+use simple_logger::SimpleLogger;
 
 #[actix_web::main]
 async fn main() -> anyhow::Result<()> {
+    SimpleLogger::new()
+        .with_level(LevelFilter::Info)
+        .with_colors(true)
+        .env()
+        .init()?;
+
     let cli = Cli::parse();
     match &cli.command {
         Commands::Run { config } => run(config).await?,
@@ -33,7 +40,7 @@ async fn run(config: &String) -> anyhow::Result<()> {
             .route("/hey", web::get().to(route::manual_hello))
     })
     .bind(settings.web.server.to_addr())?;
-    println!("Starting web server at {:?}", settings.web.server.to_addr());
+    info!("Starting web server at {:?}", settings.web.server.to_addr());
     server.run().await?;
     Ok(())
 }
