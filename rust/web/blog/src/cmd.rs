@@ -19,7 +19,7 @@ pub enum Commands {
             long,
             default_value = "config.yaml",
             help = "Path to the configuration file",
-            value_name = "CONFIG_FILE"
+            value_name = "FILE"
         )]
         config: String,
     },
