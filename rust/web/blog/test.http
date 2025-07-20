@@ -8,9 +8,19 @@ GET http://localhost:8080/hey
 
 ###
 
-POST http://localhost:8080/echo?
+POST http://localhost:8080/echo
 Content-Type: application/json
 
 {
   "message": "Hello, Actix!"
+}
+
+###
+
+POST http://localhost:8080/api/entity/article/create
+Content-Type: application/json
+
+{
+  "title": "Test Post",
+  "body": "Test"
 }

@@ -1,6 +1,12 @@
+#![allow(unused)]
+
 mod cmd;
 mod conf;
+mod infra;
+mod models;
 mod route;
+mod schema;
+mod service;
 
 use actix_web::{App, HttpServer, web};
 use clap::Parser;
@@ -29,18 +35,17 @@ async fn main() -> anyhow::Result<()> {
 }
 
 async fn run(config: &String) -> anyhow::Result<()> {
-    let settings = Config::builder()
-        .add_source(File::new(config, FileFormat::Yaml))
-        .build()?
-        .try_deserialize::<conf::Config>()?;
+    conf::init(config)?;
+    let config = conf::get_config()?;
     let server = HttpServer::new(|| {
         App::new()
             .service(route::hello)
             .service(route::echo)
+            .service(route::create_article)
             .route("/hey", web::get().to(route::manual_hello))
     })
-    .bind(settings.web.server.to_addr())?;
-    info!("Starting web server at {:?}", settings.web.server.to_addr());
+    .bind(config.web.server.to_addr())?;
+    info!("Starting web server at {:?}", config.web.server.to_addr());
     server.run().await?;
     Ok(())
 }
