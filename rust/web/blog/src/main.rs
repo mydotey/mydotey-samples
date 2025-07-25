@@ -2,6 +2,7 @@
 
 mod cmd;
 mod conf;
+mod domain;
 mod infra;
 mod models;
 mod route;

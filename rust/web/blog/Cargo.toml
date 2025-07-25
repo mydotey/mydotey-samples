@@ -10,5 +10,9 @@ clap = { version = "4.5.41", features = ["derive"] }
 config = "0.15.13"
 diesel = { version = "2.2.12", features = ["sqlite", "returning_clauses_for_sqlite_3_35"] }
 log = "0.4.27"
+rbatis = "4.6.8"
+rbs = "4.6.2"
+rdbc-sqlite = "0.1.6"
 serde = "1.0.219"
 simple_logger = "5.0.0"
+w-macro = { path = "../w-macro" }
