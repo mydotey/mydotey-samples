@@ -26,6 +26,6 @@ mod tests {
         assert!(article.deleted.is_none());
         assert!(article.title.is_none());
         assert!(article.body.is_none());
-        assert!(!article.published.is_none());
+        assert!(article.published.is_none());
     }
 }
