@@ -10,3 +10,4 @@ proc-macro = true
 darling = "0.21.0"
 quote = "1.0.40"
 syn = "2.0.104"
+w-ddd = { version = "0.1.0", path = "../w-ddd" }

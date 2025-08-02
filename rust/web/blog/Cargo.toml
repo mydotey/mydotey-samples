@@ -15,4 +15,5 @@ rbs = "4.6.2"
 rdbc-sqlite = "0.1.6"
 serde = "1.0.219"
 simple_logger = "5.0.0"
+w-ddd = { version = "0.1.0", path = "../w-ddd" }
 w-macro = { path = "../w-macro" }

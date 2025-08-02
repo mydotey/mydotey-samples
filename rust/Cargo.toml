@@ -1,3 +1,3 @@
 [workspace]
 resolver = "3"
-members = ["algorithm", "misc", "web/w-spring", "web/w-actix", "web/blog", "web/w-macro"]
+members = ["algorithm", "misc", "web/w-spring", "web/w-actix", "web/blog", "web/w-macro", "web/w-ddd"]
