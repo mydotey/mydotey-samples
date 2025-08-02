@@ -14,4 +14,6 @@ pub trait Entity {
     fn set_update_time(&mut self, update_time: Option<EntityTime>);
     fn is_deleted(&self) -> Option<bool>;
     fn set_deleted(&mut self, deleted: Option<bool>);
+    fn get_version(&self) -> Option<u64>;
+    fn set_version(&mut self, version: Option<u64>);
 }

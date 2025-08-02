@@ -73,6 +73,11 @@ pub fn entity_fields(args: TokenStream, input: TokenStream) -> TokenStream {
                 .parse2(quote! { pub deleted: Option<bool> })
                 .unwrap(),
         );
+        fields.named.push(
+            syn::Field::parse_named
+                .parse2(quote! { pub version: Option<u64> })
+                .unwrap(),
+        );
     }
 
     return quote! {
@@ -123,7 +128,7 @@ pub fn derive_entity(item: TokenStream) -> TokenStream {
                 self.update_time
             }
 
-            fn set_update_time(&mut self, update_time: Option<u64>) {
+            fn set_update_time(&mut self, update_time: Option<w_ddd::entity::EntityTime>) {
                 self.update_time = update_time;
             }
 
@@ -133,6 +138,14 @@ pub fn derive_entity(item: TokenStream) -> TokenStream {
 
             fn set_deleted(&mut self, deleted: Option<bool>) {
                 self.deleted = deleted;
+            }
+
+            fn get_version(&self) -> Option<u64> {
+                self.version
+            }
+
+            fn set_version(&mut self, version: Option<u64>) {
+                self.version = version;
             }
         }
     }
