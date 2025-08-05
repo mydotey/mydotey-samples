@@ -1,5 +1,5 @@
-pub type EntityID = u64;
-pub type EntityTime = u64;
+pub type EntityID = i64;
+pub type EntityTime = i64;
 
 pub trait Entity {
     fn get_id(&self) -> Option<EntityID>;

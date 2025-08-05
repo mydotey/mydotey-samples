@@ -60,4 +60,5 @@ impl ServerConfig {
 #[derive(Debug, Clone, serde::Deserialize)]
 pub struct Db {
     pub url: String,
+    pub sqlite: String,
 }

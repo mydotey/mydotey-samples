@@ -4,3 +4,4 @@ web:
     port: 8080
 db:
   url: ./deploy/blog.db
+  sqlite: ./deploy/blog2.db

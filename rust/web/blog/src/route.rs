@@ -1,6 +1,9 @@
 use actix_web::{HttpResponse, Responder, get, post, web::Json};
 
-use crate::models::{Article, NewArticle};
+use crate::{
+    domain::content::Article as Article2,
+    models::{Article, NewArticle},
+};
 
 #[get("/")]
 pub async fn hello() -> impl Responder {
@@ -19,6 +22,17 @@ pub async fn manual_hello() -> impl Responder {
 #[post("/api/entity/article/create")]
 pub async fn create_article(json: Json<NewArticle>) -> impl Responder {
     match crate::service::article::create_article(json.into_inner()) {
+        Ok(model) => HttpResponse::Created().json(model),
+        Err(e) => {
+            log::error!("Failed to create article: {}", e);
+            HttpResponse::InternalServerError().body("Failed to create article")
+        }
+    }
+}
+
+#[post("/api/entity/article/create2")]
+pub async fn create_article2(json: Json<Article2>) -> impl Responder {
+    match crate::service::article::create_article2(json.into_inner()) {
         Ok(model) => HttpResponse::Created().json(model),
         Err(e) => {
             log::error!("Failed to create article: {}", e);
