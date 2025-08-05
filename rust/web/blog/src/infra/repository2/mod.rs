@@ -12,7 +12,7 @@ use w_ddd::{entity::Entity, repository::Repository};
 use crate::domain::content::{Article, ArticleRepository};
 
 #[macro_export]
-macro_rules! repository {
+macro_rules! impl_repo {
     ($e:tt, $e_t:tt, $repo:tt, $impl_repo:tt) => {
         crud!($e_t {});
 
@@ -152,7 +152,7 @@ macro_rules! repository {
     };
 }
 
-repository!(
+impl_repo!(
     article,
     Article,
     ArticleRepository,
