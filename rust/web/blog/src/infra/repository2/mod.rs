@@ -12,12 +12,14 @@ use w_ddd::{entity::Entity, repository::Repository};
 
 use crate::domain::content::{Article, ArticleRepository};
 
+use super::db::*;
+
 crud!(Article {});
 
-pub fn new_article_repository(rbatis: &RBatis) -> Box<dyn ArticleRepository> {
-    Box::new(DefaultArticleRepository {
-        rbatis: rbatis.clone(),
-    })
+pub fn article() -> anyhow::Result<Box<dyn ArticleRepository>> {
+    Ok(Box::new(DefaultArticleRepository {
+        rbatis: get_rbatis()?,
+    }))
 }
 
 struct DefaultArticleRepository {

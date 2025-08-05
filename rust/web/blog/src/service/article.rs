@@ -13,7 +13,6 @@ pub fn create_article(model: NewArticle) -> anyhow::Result<Article> {
 }
 
 pub fn create_article2(model: Article2) -> anyhow::Result<Article2> {
-    let rbatis = db::get_rbatis()?;
-    let repository = crate::infra::repository2::new_article_repository(&rbatis);
+    let repository = crate::infra::repository2::article()?;
     repository.create(model)
 }
