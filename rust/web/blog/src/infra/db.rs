@@ -1,11 +1,12 @@
 use crate::schema::*;
-use anyhow::anyhow;
+use anyhow::{Ok, anyhow};
 use diesel::prelude::*;
 use rbatis::RBatis;
 use rbdc_sqlite::SqliteDriver;
 use std::{
     env,
     pin::pin,
+    sync::RwLock,
     task::{Context, Poll, Waker},
 };
 
@@ -18,8 +19,18 @@ pub fn get_connection() -> anyhow::Result<SqliteConnection> {
 }
 
 pub fn get_rbatis() -> anyhow::Result<RBatis> {
+    static RBATIS: RwLock<Option<RBatis>> = RwLock::new(None);
+    let lock = RBATIS.read().map_err(|e| anyhow!("{}", e.to_string()))?;
+    match lock.as_ref() {
+        Some(rb) => return Ok(rb.clone()),
+        None => drop(lock),
+    }
+
+    let mut lock = RBATIS.write().map_err(|e| anyhow!("{}", e.to_string()))?;
+    if lock.is_some() {
+        return Ok(lock.as_ref().unwrap().clone());
+    }
     let config = conf::get_config()?;
-    let db_url = config.db.url.clone();
     let rbatis = RBatis::new();
     let waker = Waker::noop();
     let mut cx = Context::from_waker(waker);
@@ -30,5 +41,7 @@ pub fn get_rbatis() -> anyhow::Result<RBatis> {
             break;
         }
     }
-    Ok(rbatis.clone())
+    lock.replace(rbatis.clone());
+
+    Ok(lock.as_ref().unwrap().clone())
 }
