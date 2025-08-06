@@ -156,30 +156,21 @@ pub fn derive_entity(item: TokenStream) -> TokenStream {
 #[darling(derive_syn_parse)]
 struct RepositoryArgs {
     ty: String,
-    method: String,
 }
 
 #[proc_macro]
 pub fn repository(input: TokenStream) -> TokenStream {
-    let RepositoryArgs { ty, method } = match syn::parse(input) {
+    let RepositoryArgs { ty } = match syn::parse(input) {
         Ok(v) => v,
         Err(e) => {
             return e.to_compile_error().into();
         }
     };
-    let method = format_ident!("{}", method);
     let entity_type = format_ident!("{}", ty);
-    let repo = format_ident!("{}Repository", ty);
     let impl_repo = format_ident!("Default{}Repository", ty);
 
     quote! {
         rbatis::crud!(#entity_type {});
-
-        pub fn #method() -> anyhow::Result<Box<dyn #repo>> {
-            Ok(Box::new(#impl_repo {
-                rbatis: crate::infra::db::get_rbatis()?,
-            }))
-        }
 
         struct #impl_repo {
             rbatis: rbatis::RBatis,
@@ -194,8 +185,6 @@ pub fn repository(input: TokenStream) -> TokenStream {
                 std::any::type_name::<Self>()
             }
         }
-
-        impl #repo for #impl_repo {}
 
         impl w_ddd::repository::Repository<#entity_type> for #impl_repo {
             fn create(&self, entity: #entity_type) -> anyhow::Result<#entity_type> {
@@ -309,6 +298,28 @@ pub fn repository(input: TokenStream) -> TokenStream {
             }
         }
 
+    }
+    .into()
+}
+
+#[proc_macro]
+pub fn repository_factory(input: TokenStream) -> TokenStream {
+    let RepositoryArgs { ty } = match syn::parse(input) {
+        Ok(v) => v,
+        Err(e) => {
+            return e.to_compile_error().into();
+        }
+    };
+    let method = format_ident!("{}", ty.to_lowercase());
+    let repo = format_ident!("{}Repository", ty);
+    let impl_repo = format_ident!("Default{}Repository", ty);
+
+    quote! {
+        pub fn #method() -> anyhow::Result<Box<dyn #repo>> {
+            Ok(Box::new(#impl_repo {
+                rbatis: crate::infra::db::get_rbatis()?,
+            }))
+        }
     }
     .into()
 }
