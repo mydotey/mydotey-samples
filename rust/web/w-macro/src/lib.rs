@@ -151,3 +151,164 @@ pub fn derive_entity(item: TokenStream) -> TokenStream {
     }
     .into()
 }
+
+#[derive(Debug, FromMeta, Default)]
+#[darling(derive_syn_parse)]
+struct RepositoryArgs {
+    ty: String,
+    method: String,
+}
+
+#[proc_macro]
+pub fn repository(input: TokenStream) -> TokenStream {
+    let RepositoryArgs { ty, method } = match syn::parse(input) {
+        Ok(v) => v,
+        Err(e) => {
+            return e.to_compile_error().into();
+        }
+    };
+    let method = format_ident!("{}", method);
+    let entity_type = format_ident!("{}", ty);
+    let repo = format_ident!("{}Repository", ty);
+    let impl_repo = format_ident!("Default{}Repository", ty);
+
+    quote! {
+        rbatis::crud!(#entity_type {});
+
+        pub fn #method() -> anyhow::Result<Box<dyn #repo>> {
+            Ok(Box::new(#impl_repo {
+                rbatis: crate::infra::db::get_rbatis()?,
+            }))
+        }
+
+        struct #impl_repo {
+            rbatis: rbatis::RBatis,
+        }
+
+        impl #impl_repo {
+            fn executor(&self) -> &dyn rbatis::executor::Executor {
+                &self.rbatis
+            }
+
+            fn table_name(&self) -> &'static str {
+                std::any::type_name::<Self>()
+            }
+        }
+
+        impl #repo for #impl_repo {}
+
+        impl w_ddd::repository::Repository<#entity_type> for #impl_repo {
+            fn create(&self, entity: #entity_type) -> anyhow::Result<#entity_type> {
+                let mut entity = entity;
+                let now = chrono::Local::now().timestamp();
+                entity.create_time = Some(now);
+                entity.update_time = Some(now);
+                entity.version = Some(0);
+                let waker = std::task::Waker::noop();
+                let mut cx = std::task::Context::from_waker(waker);
+                let mut future = std::pin::pin!(#entity_type::insert(self.executor(), &entity));
+                loop {
+                    if let std::task::Poll::Ready(r) = future.as_mut().poll(&mut cx) {
+                        return r
+                            .map(|r| {
+                                let mut e = entity.clone();
+                                e.id = r.last_insert_id.as_i64();
+                                return e;
+                            })
+                            .map_err(|e| {
+                                anyhow::anyhow!("Failed to create record of {}: {}", self.table_name(), e)
+                            });
+                    }
+                }
+            }
+
+            fn read(&self, id: w_ddd::entity::EntityID) -> anyhow::Result<#entity_type> {
+                let waker = std::task::Waker::noop();
+                let mut cx = std::task::Context::from_waker(waker);
+                let mut future = std::pin::pin!(#entity_type::select_by_map(self.executor(), rbs::value! { "id": id }));
+                loop {
+                    if let std::task::Poll::Ready(r) = future.as_mut().poll(&mut cx) {
+                        let r = r.map_err(|e| {
+                            anyhow::anyhow!("Failed to read record of {}: {}", self.table_name(), e)
+                        })?;
+                        return if r.is_empty() {
+                            Err(anyhow::anyhow!(
+                                "record of {} with id {} not found",
+                                self.table_name(),
+                                id
+                            ))
+                        } else if r.len() > 1 {
+                            Err(anyhow::anyhow!(
+                                "{} records of {} found with id {}",
+                                r.len(),
+                                self.table_name(),
+                                id
+                            ))
+                        } else {
+                            Ok(r[0].clone())
+                        };
+                    }
+                }
+            }
+
+            fn update(&self, entity: #entity_type) -> anyhow::Result<()> {
+                let waker = std::task::Waker::noop();
+                let mut cx = std::task::Context::from_waker(waker);
+                let mut future = std::pin::pin!(#entity_type::update_by_map(
+                    self.executor(),
+                    &entity,
+                    rbs::value! { "id": entity.id}
+                ));
+                loop {
+                    if let std::task::Poll::Ready(r) = future.as_mut().poll(&mut cx) {
+                        let r = r.map_err(|e| {
+                            anyhow::anyhow!("Failed to read record of {}: {}", self.table_name(), e)
+                        })?;
+                        return match r.rows_affected {
+                            0 => Err(anyhow::anyhow!(
+                                "record of {} with id {:?} not found",
+                                self.table_name(),
+                                entity.id
+                            )),
+                            1 => Ok(()),
+                            _ => Err(anyhow::anyhow!(
+                                "{} records of {} found with id {:?}",
+                                r.rows_affected,
+                                self.table_name(),
+                                entity.id
+                            )),
+                        };
+                    }
+                }
+            }
+
+            fn delete(&self, id: w_ddd::entity::EntityID) -> anyhow::Result<()> {
+                let waker = std::task::Waker::noop();
+                let mut cx = std::task::Context::from_waker(waker);
+                let mut future = std::pin::pin!(#entity_type::delete_by_map(self.executor(), rbs::value! { "id": id}));
+                loop {
+                    if let std::task::Poll::Ready(r) = future.as_mut().poll(&mut cx) {
+                        let r = r.map_err(|e| {
+                            anyhow::anyhow!(
+                                "Failed to delete record of {}: {}",
+                                self.table_name(),
+                                e
+                            )
+                        })?;
+                        return match r.rows_affected {
+                            0 | 1 => Ok(()),
+                            _ => Err(anyhow::anyhow!(
+                                "{} records of {} found with id {}",
+                                r.rows_affected,
+                                self.table_name(),
+                                id
+                            )),
+                        };
+                    }
+                }
+            }
+        }
+
+    }
+    .into()
+}
