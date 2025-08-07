@@ -3,5 +3,4 @@ web:
     host: localhost
     port: 8080
 db:
-  url: ./deploy/blog.db
-  sqlite: ./deploy/blog2.db
+  sqlite: ./deploy/blog.db

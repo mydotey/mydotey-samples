@@ -4,9 +4,7 @@ mod cmd;
 mod conf;
 mod domain;
 mod infra;
-mod models;
 mod route;
-mod schema;
 mod service;
 
 use actix_web::{App, HttpServer, web};
@@ -43,7 +41,6 @@ async fn run(config: &String) -> anyhow::Result<()> {
             .service(route::hello)
             .service(route::echo)
             .service(route::create_article)
-            .service(route::create_article2)
             .route("/hey", web::get().to(route::manual_hello))
     })
     .bind(config.web.server.to_addr())?;

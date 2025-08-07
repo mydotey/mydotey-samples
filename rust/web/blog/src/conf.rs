@@ -1,5 +1,4 @@
 use anyhow::anyhow;
-use diesel::dsl::Or;
 use log::warn;
 use std::sync::{
     RwLock,
@@ -59,6 +58,5 @@ impl ServerConfig {
 
 #[derive(Debug, Clone, serde::Deserialize)]
 pub struct Db {
-    pub url: String,
     pub sqlite: String,
 }

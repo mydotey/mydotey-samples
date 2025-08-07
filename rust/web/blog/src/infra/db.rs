@@ -1,6 +1,4 @@
-use crate::schema::*;
 use anyhow::{Ok, anyhow};
-use diesel::prelude::*;
 use rbatis::RBatis;
 use rbdc_sqlite::SqliteDriver;
 use std::{
@@ -11,12 +9,6 @@ use std::{
 };
 
 use crate::conf;
-
-pub fn get_connection() -> anyhow::Result<SqliteConnection> {
-    let config = conf::get_config()?;
-    SqliteConnection::establish(&config.db.url)
-        .map_err(|e| anyhow!("Error connecting to database: {}", e))
-}
 
 pub fn get_rbatis() -> anyhow::Result<RBatis> {
     static RBATIS: RwLock<Option<RBatis>> = RwLock::new(None);

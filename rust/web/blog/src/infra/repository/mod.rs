@@ -1,10 +1,9 @@
-mod article;
-pub use article::*;
+use w_macro::{repository, repository_factory};
 
-pub trait Repository {
-    type NewModel;
-    type QueryModel;
+use crate::domain::content::{Article, ArticleRepository};
 
-    fn create(&mut self, model: Self::NewModel) -> anyhow::Result<Self::QueryModel>;
-    fn find_by_id(&mut self, id: i32) -> anyhow::Result<Option<Self::QueryModel>>;
-}
+repository!(Article);
+
+impl ArticleRepository for DefaultArticleRepository {}
+
+repository_factory!(Article);
