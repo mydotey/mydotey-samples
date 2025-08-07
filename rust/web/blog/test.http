@@ -21,6 +21,9 @@ POST http://localhost:8080/api/entity/article/create
 Content-Type: application/json
 
 {
+  "created_by": 8,
+  "updated_by": 8,
+  "published": false,
   "title": "Test Post",
   "body": "Test"
 }

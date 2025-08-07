@@ -1,6 +1,5 @@
 use std::any;
 
-use crate::infra::db;
 use crate::infra::repository::*;
 
 use crate::domain::content::Article;
