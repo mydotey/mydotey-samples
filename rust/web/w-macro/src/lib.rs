@@ -310,7 +310,7 @@ pub fn repository_factory(input: TokenStream) -> TokenStream {
             return e.to_compile_error().into();
         }
     };
-    let method = format_ident!("{}", ty.to_lowercase());
+    let method = to_method(&ty);
     let repo = format_ident!("{}Repository", ty);
     let impl_repo = format_ident!("Default{}Repository", ty);
 
@@ -322,4 +322,23 @@ pub fn repository_factory(input: TokenStream) -> TokenStream {
         }
     }
     .into()
+}
+
+fn to_method(s: &String) -> syn::Ident {
+    let mut parts: Vec<String> = vec![];
+    let mut part = String::new();
+    for c in s.chars() {
+        if c.is_uppercase() {
+            if !part.is_empty() && !part.chars().last().unwrap().is_uppercase() {
+                parts.push(part.to_lowercase());
+                part.clear();
+            }
+        }
+        part.push(c);
+    }
+    if !part.is_empty() {
+        parts.push(part.to_lowercase());
+    }
+    let method = parts.join("_");
+    format_ident!("{}", method)
 }
