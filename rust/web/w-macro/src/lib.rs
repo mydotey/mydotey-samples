@@ -152,20 +152,9 @@ pub fn derive_entity(item: TokenStream) -> TokenStream {
     .into()
 }
 
-#[derive(Debug, FromMeta, Default)]
-#[darling(derive_syn_parse)]
-struct RepositoryArgs {
-    ty: String,
-}
-
 #[proc_macro]
 pub fn repository(input: TokenStream) -> TokenStream {
-    let RepositoryArgs { ty } = match syn::parse(input) {
-        Ok(v) => v,
-        Err(e) => {
-            return e.to_compile_error().into();
-        }
-    };
+    let ty = input.to_string();
     let entity_type = format_ident!("{}", ty);
     let impl_repo = format_ident!("Default{}Repository", ty);
 
@@ -304,12 +293,7 @@ pub fn repository(input: TokenStream) -> TokenStream {
 
 #[proc_macro]
 pub fn repository_factory(input: TokenStream) -> TokenStream {
-    let RepositoryArgs { ty } = match syn::parse(input) {
-        Ok(v) => v,
-        Err(e) => {
-            return e.to_compile_error().into();
-        }
-    };
+    let ty = input.to_string();
     let method = to_method(&ty);
     let repo = format_ident!("{}Repository", ty);
     let impl_repo = format_ident!("Default{}Repository", ty);
