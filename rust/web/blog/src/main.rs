@@ -2,12 +2,12 @@
 
 mod cmd;
 mod conf;
+mod controller;
 mod domain;
 mod infra;
-mod route;
 mod service;
 
-use actix_web::{App, HttpServer, web};
+use actix_web::{App, HttpServer};
 use clap::Parser;
 
 use cmd::*;
@@ -37,11 +37,8 @@ async fn run(config: &String) -> anyhow::Result<()> {
     conf::init(config)?;
     let config = conf::get_config()?;
     let server = HttpServer::new(|| {
-        App::new()
-            .service(route::hello)
-            .service(route::echo)
-            .service(route::create_article)
-            .route("/hey", web::get().to(route::manual_hello))
+        let mut app = App::new();
+        return controller::config(app);
     })
     .bind(config.web.server.to_addr())?;
     info!("Starting web server at {:?}", config.web.server.to_addr());
