@@ -5,6 +5,6 @@ edition = "2024"
 
 [dependencies]
 spring = "0.4.1"
-serde-toml-merge = "=0.3.9"
+serde-toml-merge = "0.3.9"
 spring-web = "0.4.4"
 tokio = "1.46.1"
