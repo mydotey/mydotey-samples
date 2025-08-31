@@ -1,6 +1,0 @@
-web:
-  server:
-    host: localhost
-    port: 8080
-db:
-  sqlite: ./deploy/blog.db
